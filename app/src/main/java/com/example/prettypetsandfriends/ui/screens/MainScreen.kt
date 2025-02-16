@@ -1,22 +1,27 @@
 package com.example.prettypetsandfriends.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,41 +36,55 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
+    val selectedItem = remember { mutableStateOf("main") }
+    val items = listOf(
+        MenuItem("Главная", painterResource(id = R.drawable.ic_home_black), "main"),
+        MenuItem("Здоровье", painterResource(id = R.drawable.ic_pets_black), "health"),
+        MenuItem("Питание", painterResource(id = R.drawable.ic_pets_black), "nutrition"),
+        MenuItem("Ассистент", painterResource(id = R.drawable.ic_chat_black), "ai_assistant"),
+        MenuItem("Календарь", painterResource(id = R.drawable.ic_calendar_black), "calendar")
+    )
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(modifier = Modifier.width(280.dp)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
                     Text(
-                        text = "Pet Health Tracker",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        "PetCare",
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                     )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                ),
+                actions = {
+                    IconButton(onClick = { navController.navigate("profile") }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_person_black),
+                            contentDescription = "Профиль",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
-
-                val menuItems = listOf(
-                    MenuItem("Главная",painterResource(id = R.drawable.ic_home_black) , "main"),
-                    MenuItem("Дневник здоровья", painterResource(id = R.drawable.ic_book_black), "health_diary"),
-                    MenuItem("AI-ассистент",painterResource(id = R.drawable.ic_chat_black) , "ai_assistant"),
-                    MenuItem("Календарь",painterResource(id = R.drawable.ic_calendar_black) , "calendar"),
-                    MenuItem("Профиль",painterResource(id = R.drawable.ic_account_box_black) , "profile"),
-                    MenuItem("Настройки",painterResource(id = R.drawable.ic_settings_black) , "settings")
-                )
-
-                menuItems.forEach { item ->
-                    NavigationDrawerItem(
+            )
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                tonalElevation = 8.dp
+            ) {
+                items.forEach { item ->
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                painter = item.icon,
+                                contentDescription = item.title
+                            )
+                        },
                         label = { Text(item.title) },
-                        selected = false,
+                        selected = selectedItem.value == item.route,
                         onClick = {
-                            scope.launch { drawerState.close() }
+                            selectedItem.value = item.route
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
@@ -74,131 +93,116 @@ fun MainScreen(navController: NavController) {
                                 restoreState = true
                             }
                         },
-                        icon = {
-                            Icon(
-                                painter = item.icon,
-                                contentDescription = item.title
-                            )
-                        },
-                        modifier = Modifier.padding(8.dp)
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     )
                 }
             }
         }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Hello, User!") },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Меню")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { /* TODO: Open profile */ }) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_person_black),
-                                contentDescription = "Аватар",
-                                modifier = Modifier.size(40.dp)
-                            )
-                        }
-                    }
-                )
-            }
-        ) { paddingValues ->
-            PetCareScreen(paddingValues, navController)
-        }
+    ) { paddingValues ->
+        ModernPetCareScreen(paddingValues, navController)
     }
 }
 
 @Composable
-fun PetCareScreen(paddingValues: PaddingValues, navController: NavController) {
+fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavController) {
     val pets = remember { PetsRepository.pets }
 
-    Scaffold { paddingValues ->
+    Column(
+        modifier = Modifier
+            .padding(paddingValues)
+            .verticalScroll(rememberScrollState())
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Header
         Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Header
             Text(
-                text = "Hi Jennifer,",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
+                text = "Добро пожаловать,",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             Text(
-                text = "Let's take care of your cutie pets!",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.Gray
+                text = "Jennifer!",
+                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
             )
+        }
 
-            // Services Row
+        LazyRow(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item { QuickActionCard("Медицина", R.drawable.ic_people_black, Color(0x8F8C2F2C)) }
+            item { QuickActionCard("Прогулки", R.drawable.ic_pets_black, Color(0x8F8C2F2C)) }
+            item { QuickActionCard("Анализы", R.drawable.ic_book_black, Color(0x8F8C2F2C)) }
+        }
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        bottom = 24.dp,
-                        top = 16.dp
-                        ),
-                shape = RoundedCornerShape(16.dp)
+        // Pets Section
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Health Checkup",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "© 09:00 AM • 14 July 2020",
-                        color = Color.Gray
-                    )
+                Text(
+                    text = "Мои питомцы",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+                )
+                TextButton(onClick = { /* Добавить питомца */ }) {
+                    Text("Добавить +")
                 }
             }
 
-            // My Pets Section
-            Text(
-                text = "My Pets",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
                 items(pets) { pet ->
-                    PetCard(pet = pet, navController = navController)
+                    ModernPetCard(pet = pet, navController = navController)
                 }
             }
+        }
 
-            // Pet Care Card
-            Spacer(modifier = Modifier.height(24.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(16.dp)
+        // Health Section
+        Card(
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text(
+                    text = "Следующее мероприятие",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Вакцинация • 15 июля 2024",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                Button(
+                    onClick = { /* */ },
+                    modifier = Modifier.padding(top = 16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
-                    Text(
-                        text = "Helping you to take good care of your Pet",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = "All pets deserves some care and love!",
-                        color = Color.White.copy(alpha = 0.8f),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    Button(onClick = { /*TODO*/ }) {
-                        Text("Get Started")
-                    }
+                    Text("Напомнить мне")
                 }
             }
         }
@@ -206,25 +210,104 @@ fun PetCareScreen(paddingValues: PaddingValues, navController: NavController) {
 }
 
 @Composable
-fun PetCard(pet: PetProfile, navController: NavController) {
+fun ModernPetCard(pet: PetProfile, navController: NavController) {
     Card(
         modifier = Modifier
-            .width(200.dp)
-            .clickable {
-                navController.navigate("pet_profile/${pet.id}")
-            },
-        shape = RoundedCornerShape(16.dp)
+            .width(280.dp)
+            .clickable { navController.navigate("pet_profile/${pet.id}") },
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = pet.name,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_pets_black),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                Column {
+                    Text(
+                        text = pet.name,
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = "${pet.age}, ${pet.breed}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                InfoChip("Вес", "${pet.weight} кг")
+                InfoChip("Последний визит", "2 дн. назад")
+            }
+        }
+    }
+}
+
+@Composable
+fun InfoChip(label: String, value: String) {
+    Column(
+        modifier = Modifier
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = MaterialTheme.shapes.small
             )
-            Spacer(Modifier.height(8.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun QuickActionCard(title: String, iconRes: Int, color: Color) {
+    Card(
+        modifier = Modifier.size(120.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = color)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = title,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "${pet.age}, ${pet.breed}",
-                color = Color.Gray
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium
             )
         }
     }
