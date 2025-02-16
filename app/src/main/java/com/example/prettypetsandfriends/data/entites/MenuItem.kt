@@ -1,4 +1,4 @@
-package com.example.prettypetsandfriends.ui.components
+package com.example.prettypetsandfriends.data.entites
 
 import androidx.compose.ui.graphics.painter.Painter
 

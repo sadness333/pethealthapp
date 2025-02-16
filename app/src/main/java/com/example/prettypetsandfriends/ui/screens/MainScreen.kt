@@ -1,6 +1,7 @@
 package com.example.prettypetsandfriends.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -11,22 +12,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.ui.components.MenuItem
+import com.example.prettypetsandfriends.data.entites.PetProfile
+import com.example.prettypetsandfriends.data.entites.PetsRepository
+import com.example.prettypetsandfriends.data.entites.MenuItem
 import kotlinx.coroutines.launch
 
-@Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(navController: NavController) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -34,7 +38,6 @@ fun MainScreen() {
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(modifier = Modifier.width(280.dp)) {
-                // Заголовок меню
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -51,7 +54,6 @@ fun MainScreen() {
                 val menuItems = listOf(
                     MenuItem("Главная",painterResource(id = R.drawable.ic_home_black) , "main"),
                     MenuItem("Дневник здоровья", painterResource(id = R.drawable.ic_book_black), "health_diary"),
-                    MenuItem("Сообщество",painterResource(id = R.drawable.ic_people_black) , "community"),
                     MenuItem("AI-ассистент",painterResource(id = R.drawable.ic_chat_black) , "ai_assistant"),
                     MenuItem("Календарь",painterResource(id = R.drawable.ic_calendar_black) , "calendar"),
                     MenuItem("Профиль",painterResource(id = R.drawable.ic_account_box_black) , "profile"),
@@ -64,7 +66,13 @@ fun MainScreen() {
                         selected = false,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            // TODO: Переход на экран (item.route)
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         },
                         icon = {
                             Icon(
@@ -81,7 +89,7 @@ fun MainScreen() {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Moscow, RU") },
+                    title = { Text("Hello, User!") },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Меню")
@@ -99,13 +107,15 @@ fun MainScreen() {
                 )
             }
         ) { paddingValues ->
-            PetCareScreen(paddingValues)
+            PetCareScreen(paddingValues, navController)
         }
     }
 }
 
 @Composable
-fun PetCareScreen(paddingValues: PaddingValues) {
+fun PetCareScreen(paddingValues: PaddingValues, navController: NavController) {
+    val pets = remember { PetsRepository.pets }
+
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -158,11 +168,9 @@ fun PetCareScreen(paddingValues: PaddingValues) {
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(listOf("Morphy", "Kitten")) { pet ->
-                    PetCard(petName = pet)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(pets) { pet ->
+                    PetCard(pet = pet, navController = navController)
                 }
             }
 
@@ -198,25 +206,24 @@ fun PetCareScreen(paddingValues: PaddingValues) {
 }
 
 @Composable
-fun PetCard(petName: String) {
+fun PetCard(pet: PetProfile, navController: NavController) {
     Card(
-        modifier = Modifier.width(200.dp),
+        modifier = Modifier
+            .width(200.dp)
+            .clickable {
+                navController.navigate("pet_profile/${pet.id}")
+            },
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = petName,
+                text = pet.name,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
-                text = when(petName) {
-                    "Morphy" -> "2 Years 3 Months"
-                    else -> "3 Years 6 Months"
-                },
+                text = "${pet.age}, ${pet.breed}",
                 color = Color.Gray
             )
         }
