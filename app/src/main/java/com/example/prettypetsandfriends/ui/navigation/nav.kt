@@ -15,6 +15,7 @@ import com.example.prettypetsandfriends.ui.screens.LoginScreen
 import com.example.prettypetsandfriends.ui.screens.MainScreen
 import com.example.prettypetsandfriends.ui.screens.PetProfileScreen
 import com.example.prettypetsandfriends.ui.screens.SplashScreen
+import com.example.prettypetsandfriends.ui.screens.UserProfileScreen
 
 @Composable
 fun NavigationPetApp() {
@@ -29,6 +30,7 @@ fun NavigationPetApp() {
         composable("ai_assistant") { AiChatScreen(navController) }
         composable("calendar") { CalendarScreen(navController) }
         composable("nutrition") { FeedingScreen(navController) }
+        composable("profile") { UserProfileScreen(navController) }
         composable(
             route = "pet_profile/{petId}",
             arguments = listOf(navArgument("petId") { type = NavType.StringType })
