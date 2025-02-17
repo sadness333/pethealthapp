@@ -2,6 +2,7 @@ package com.example.prettypetsandfriends.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -10,17 +11,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,33 +32,90 @@ import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.data.entites.PetProfile
 import com.example.prettypetsandfriends.data.entites.PetsRepository
 import com.example.prettypetsandfriends.data.entites.MenuItem
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
     val selectedItem = remember { mutableStateOf("main") }
     val items = listOf(
         MenuItem("Главная", painterResource(id = R.drawable.ic_home_black), "main"),
-        MenuItem("Дневник", painterResource(id = R.drawable.ic_health), "health_diary"),
+        MenuItem("Дневник", painterResource(id = R.drawable.ic_book_black), "health_diary"),
         MenuItem("Питание", painterResource(id = R.drawable.ic_eating), "nutrition"),
         MenuItem("Чат", painterResource(id = R.drawable.ic_chat_black), "ai_assistant"),
         MenuItem("События", painterResource(id = R.drawable.ic_calendar_black), "calendar")
     )
 
+    var showPetDropdown by remember { mutableStateOf(false) }
+    val pets = remember { PetsRepository.pets }
+
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .shadow(
+                        elevation = 12.dp,
+                        shape = RoundedCornerShape(
+                            bottomStart = 32.dp,
+                            bottomEnd = 32.dp
+                        )
+                    ),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(
+                    bottomStart = 32.dp,
+                    bottomEnd = 32.dp
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clickable { showPetDropdown = true }
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_pets_black),
+                            contentDescription = "Питомец",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(12.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = CircleShape
+                                )
+                                .border(
+                                    width = 2.dp,
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = CircleShape
+                                )
+                        )
+                    }
+
                     Text(
-                        "PetCare",
-                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                        text = "МяуГав",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.onPrimaryContainer,
+                                    MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        )
                     )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                ),
-                actions = {
+
                     IconButton(onClick = { navController.navigate("profile") }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_person_black),
@@ -66,7 +124,7 @@ fun MainScreen(navController: NavController) {
                         )
                     }
                 }
-            )
+            }
         },
         bottomBar = {
             NavigationBar(
@@ -103,7 +161,57 @@ fun MainScreen(navController: NavController) {
             }
         }
     ) { paddingValues ->
-        ModernPetCareScreen(paddingValues, navController)
+        Box(modifier = Modifier.fillMaxSize()) {
+            ModernPetCareScreen(paddingValues, navController)
+
+            // Выпадающее меню для выбора питомца
+            if (showPetDropdown) {
+                DropdownMenu(
+                    expanded = showPetDropdown,
+                    onDismissRequest = { showPetDropdown = false },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .background(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                ) {
+                    pets.forEach { pet ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = pet.name,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            },
+                            onClick = {
+                                showPetDropdown = false
+                            }
+                        )
+                    }
+
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_add),
+                                    contentDescription = "Добавить",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text("Добавить питомца")
+                            }
+                        },
+                        onClick = {
+                            navController.navigate("add_pet")
+                            showPetDropdown = false
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -140,7 +248,7 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
         ) {
             item { QuickActionCard("Медицина", R.drawable.ic_medicine) }
             item { QuickActionCard("Прогулки", R.drawable.ic_grass) }
-            item { QuickActionCard("Анализы", R.drawable.ic_book_black) }
+            item { QuickActionCard("Анализы", R.drawable.ic_analytics) }
         }
 
         // Pets Section
