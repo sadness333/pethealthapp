@@ -39,10 +39,10 @@ fun MainScreen(navController: NavController) {
     val selectedItem = remember { mutableStateOf("main") }
     val items = listOf(
         MenuItem("Главная", painterResource(id = R.drawable.ic_home_black), "main"),
-        MenuItem("Здоровье", painterResource(id = R.drawable.ic_pets_black), "health"),
-        MenuItem("Питание", painterResource(id = R.drawable.ic_pets_black), "nutrition"),
-        MenuItem("Ассистент", painterResource(id = R.drawable.ic_chat_black), "ai_assistant"),
-        MenuItem("Календарь", painterResource(id = R.drawable.ic_calendar_black), "calendar")
+        MenuItem("Дневник", painterResource(id = R.drawable.ic_health), "health_diary"),
+        MenuItem("Питание", painterResource(id = R.drawable.ic_eating), "nutrition"),
+        MenuItem("Чат", painterResource(id = R.drawable.ic_chat_black), "ai_assistant"),
+        MenuItem("События", painterResource(id = R.drawable.ic_calendar_black), "calendar")
     )
 
     Scaffold(
@@ -138,9 +138,9 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
             modifier = Modifier.padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { QuickActionCard("Медицина", R.drawable.ic_people_black, Color(0x8F8C2F2C)) }
-            item { QuickActionCard("Прогулки", R.drawable.ic_pets_black, Color(0x8F8C2F2C)) }
-            item { QuickActionCard("Анализы", R.drawable.ic_book_black, Color(0x8F8C2F2C)) }
+            item { QuickActionCard("Медицина", R.drawable.ic_medicine) }
+            item { QuickActionCard("Прогулки", R.drawable.ic_grass) }
+            item { QuickActionCard("Анализы", R.drawable.ic_book_black) }
         }
 
         // Pets Section
@@ -255,7 +255,7 @@ fun ModernPetCard(pet: PetProfile, navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                InfoChip("Вес", "${pet.weight} кг")
+                InfoChip("Вес", "${pet.weight}")
                 InfoChip("Последний визит", "2 дн. назад")
             }
         }
@@ -286,11 +286,11 @@ fun InfoChip(label: String, value: String) {
 }
 
 @Composable
-fun QuickActionCard(title: String, iconRes: Int, color: Color) {
+fun QuickActionCard(title: String, iconRes: Int) {
     Card(
         modifier = Modifier.size(120.dp),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = color)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
