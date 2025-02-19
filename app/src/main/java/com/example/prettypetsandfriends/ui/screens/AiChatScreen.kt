@@ -1,6 +1,7 @@
 package com.example.prettypetsandfriends.ui.screens
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,52 +37,60 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.data.entites.ChatMessage
+import com.example.prettypetsandfriends.data.entites.PetsRepository
+import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
+import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiChatScreen(navController: NavController) {
     var messageText by remember { mutableStateOf("") }
     val chatMessages = remember { mutableStateListOf<ChatMessage>() }
+    var showPetDropdown by remember { mutableStateOf(false) }
+    val pets = remember { PetsRepository.pets }
+
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("AI-ассистент") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, "Назад")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+            CustomTopBar(
+                navController = navController,
+                showPetDropdown = showPetDropdown,
+                onPetClick = { showPetDropdown = true },
+                onDismiss = { showPetDropdown = false },
+                pets = pets
             )
         },
-        bottomBar = {
-            ChatInputField(
-                messageText = messageText,
-                onMessageChange = { messageText = it },
-                onSend = {
-                    if (messageText.isNotBlank()) {
-                        chatMessages.add(ChatMessage(text = messageText, isUser = true))
-                        messageText = ""
-                        // TODO: Отправить сообщение AI и получить ответ
+        bottomBar = { CustomBottomNavigation(navController) }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(chatMessages.reversed()) { message ->
+                        ChatBubble(message = message)
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
-            )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            reverseLayout = true
-        ) {
-            items(chatMessages.reversed()) { message ->
-                ChatBubble(message = message)
-                Spacer(modifier = Modifier.height(8.dp))
+
+                ChatInputField(
+                    messageText = messageText,
+                    onMessageChange = { messageText = it },
+                    onSend = {
+                        if (messageText.isNotBlank()) {
+                            chatMessages.add(ChatMessage(text = messageText, isUser = true))
+                            messageText = ""
+                        }
+                    }
+                )
             }
         }
     }
@@ -95,7 +103,8 @@ fun ChatBubble(message: ChatMessage) {
     val textColor = if (message.isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .padding(top=15.dp),
         contentAlignment = alignment
     ) {
         Card(
@@ -103,12 +112,14 @@ fun ChatBubble(message: ChatMessage) {
                 topStart = if (message.isUser) 16.dp else 4.dp,
                 topEnd = if (message.isUser) 4.dp else 16.dp,
                 bottomStart = 16.dp,
-                bottomEnd = 16.dp
+                bottomEnd = 16.dp,
+
             ),
             colors = CardDefaults.cardColors(
                 containerColor = bubbleColor,
                 contentColor = textColor
             )
+
         ) {
             Text(
                 text = message.text,

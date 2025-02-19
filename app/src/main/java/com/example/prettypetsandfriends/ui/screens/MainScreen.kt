@@ -32,6 +32,8 @@ import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.data.entites.PetProfile
 import com.example.prettypetsandfriends.data.entites.PetsRepository
 import com.example.prettypetsandfriends.data.entites.MenuItem
+import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
+import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
 @Composable
 fun MainScreen(navController: NavController) {
@@ -49,117 +51,15 @@ fun MainScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp)
-                    .shadow(
-                        elevation = 12.dp,
-                        shape = RoundedCornerShape(
-                            bottomStart = 32.dp,
-                            bottomEnd = 32.dp
-                        )
-                    ),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(
-                    bottomStart = 32.dp,
-                    bottomEnd = 32.dp
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clickable { showPetDropdown = true }
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_pets_black),
-                            contentDescription = "Питомец",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .size(12.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    shape = CircleShape
-                                )
-                                .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = CircleShape
-                                )
-                        )
-                    }
-
-                    Text(
-                        text = "МяуГав",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.onPrimaryContainer,
-                                    MaterialTheme.colorScheme.primary
-                                )
-                            )
-                        )
-                    )
-
-                    IconButton(onClick = { navController.navigate("profile") }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_person_black),
-                            contentDescription = "Профиль",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
+            CustomTopBar(
+                navController = navController,
+                showPetDropdown = showPetDropdown,
+                onPetClick = { showPetDropdown = true },
+                onDismiss = { showPetDropdown = false },
+                pets = pets
+            )
         },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 8.dp
-            ) {
-                items.forEach { item ->
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                painter = item.icon,
-                                contentDescription = item.title
-                            )
-                        },
-                        label = { Text(item.title) },
-                        selected = selectedItem.value == item.route,
-                        onClick = {
-                            selectedItem.value = item.route
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    )
-                }
-            }
-        }
+        bottomBar = { CustomBottomNavigation(navController) }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
             ModernPetCareScreen(paddingValues, navController)

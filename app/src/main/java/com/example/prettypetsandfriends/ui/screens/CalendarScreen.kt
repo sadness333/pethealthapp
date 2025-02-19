@@ -65,6 +65,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.data.entites.CalendarEvent
+import com.example.prettypetsandfriends.data.entites.PetsRepository
+import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
+import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -74,44 +77,55 @@ import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(navController: NavController) {
     var events by remember { mutableStateOf(emptyList<CalendarEvent>()) }
     var showAddEventDialog by remember { mutableStateOf(false) }
     var eventToEdit by remember { mutableStateOf<CalendarEvent?>(null) }
+    var showPetDropdown by remember { mutableStateOf(false) }
+    val pets = remember { PetsRepository.pets }
+
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Календарь событий", style = MaterialTheme.typography.headlineSmall) }
+            CustomTopBar(
+                navController = navController,
+                showPetDropdown = showPetDropdown,
+                onPetClick = { showPetDropdown = true },
+                onDismiss = { showPetDropdown = false },
+                pets = pets
             )
         },
+        bottomBar = { CustomBottomNavigation(navController) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddEventDialog = true },
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Добавить событие",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Добавить событие"
                 )
             }
-        }
+        },
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
         ) {
-            MiniCalendar(events = events)
-            CalendarEventList(
-                events = events,
-                onEditEvent = { event -> eventToEdit = event },
-                onDeleteEvent = { eventId -> events = events.filter { it.id != eventId } }
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 16.dp)
+            ) {
+                MiniCalendar(events = events)
+                CalendarEventList(
+                    events = events,
+                    onEditEvent = { event -> eventToEdit = event },
+                    onDeleteEvent = { eventId -> events = events.filter { it.id != eventId } }
+                )
+            }
         }
     }
 
@@ -134,7 +148,6 @@ fun CalendarScreen(navController: NavController) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MiniCalendar(events: List<CalendarEvent>) {
     var displayedMonth by remember { mutableStateOf(LocalDate.now().withDayOfMonth(1)) }
@@ -388,7 +401,9 @@ fun AddEventDialog(
 ) {
     var title by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf(Color(0xFF2196F3)) }
-    val dateState = rememberDatePickerState()
+    val dateState = rememberDatePickerState(
+        initialSelectedDateMillis = System.currentTimeMillis()
+    )
 
     EventDialogContent(
         title = title,

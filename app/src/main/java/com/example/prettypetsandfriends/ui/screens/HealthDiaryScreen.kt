@@ -20,7 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.data.entites.HealthRecord
+import com.example.prettypetsandfriends.data.entites.PetsRepository
 import com.example.prettypetsandfriends.data.entites.RecordType
+import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
+import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
 object HealthRecordsRepository {
     fun getSampleRecords(): List<HealthRecord> = listOf(
@@ -51,39 +54,35 @@ object HealthRecordsRepository {
     )
 }
 
-@Preview
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
-fun HealthDiaryScreen() {
+fun HealthDiaryScreen(navController: NavController) {
     val records = remember { HealthRecordsRepository.getSampleRecords() }
+    var showPetDropdown by remember { mutableStateOf(false) }
+    val pets = remember { PetsRepository.pets }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Дневник здоровья",
-                        modifier = Modifier.padding(start = 16.dp))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
+            topBar = {
+                CustomTopBar(
+                    navController = navController,
+                    showPetDropdown = showPetDropdown,
+                    onPetClick = { showPetDropdown = true },
+                    onDismiss = { showPetDropdown = false },
+                    pets = pets
+                )
+            },
+            bottomBar = { CustomBottomNavigation(navController) }
+        ) { paddingValues ->
+            LazyColumn(
                 modifier = Modifier
-                    .padding(bottom = 20.dp)
-                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-            )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+                    .padding(paddingValues)
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+
             items(records) { record ->
+                Spacer(modifier = Modifier.height(13.dp))
                 HealthRecordCard(record = record)
             }
         }
@@ -101,7 +100,7 @@ fun HealthRecordCard(record: HealthRecord) {
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

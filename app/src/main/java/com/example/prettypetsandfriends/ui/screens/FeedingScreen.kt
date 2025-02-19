@@ -16,31 +16,33 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.prettypetsandfriends.data.entites.FeedingRecord
+import com.example.prettypetsandfriends.data.entites.PetsRepository
+import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
+import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-data class FeedingRecord(
-    val id: UUID = UUID.randomUUID(),
-    val foodType: String,
-    val quantity: String,
-    val feedingTime: LocalDateTime,
-    val comment: String
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedingScreen(navController: NavController) {
     var feedingRecords by remember { mutableStateOf<List<FeedingRecord>>(dummyFeedingRecords) }
     var showAddFeedingDialog by remember { mutableStateOf(false) }
+    var showPetDropdown by remember { mutableStateOf(false) }
+    val pets = remember { PetsRepository.pets }
+
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Питание") },
-                modifier = Modifier.fillMaxWidth()
+            CustomTopBar(
+                navController = navController,
+                showPetDropdown = showPetDropdown,
+                onPetClick = { showPetDropdown = true },
+                onDismiss = { showPetDropdown = false },
+                pets = pets
             )
         },
+        bottomBar = { CustomBottomNavigation(navController) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddFeedingDialog = true },
@@ -49,17 +51,16 @@ fun FeedingScreen(navController: NavController) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить питание")
             }
         },
-        containerColor = MaterialTheme.colorScheme.background // edge-to-edge
-    ) { innerPadding ->
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(paddingValues)
         ) {
-            // Карточка с заглушкой для графика питания
+            Spacer(modifier = Modifier.height(13.dp))
             FeedingChartCard()
             Spacer(modifier = Modifier.height(8.dp))
-            // Список записей питания
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(feedingRecords.size) { index ->
                     val record = feedingRecords[index]
