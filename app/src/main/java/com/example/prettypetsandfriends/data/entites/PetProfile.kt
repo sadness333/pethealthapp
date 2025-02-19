@@ -14,7 +14,7 @@ data class PetProfile(
 )
 
 object PetsRepository {
-    val pets = listOf(
+    private val _pets = mutableListOf(
         PetProfile(
             id = "1",
             name = "Morphy",
@@ -37,7 +37,14 @@ object PetsRepository {
         )
     )
 
+    val pets: List<PetProfile>
+        get() = _pets
+
+    fun addPet(pet: PetProfile) {
+        _pets.add(pet)
+    }
+
     fun getPetById(id: String): PetProfile? {
-        return pets.find { it.id == id }
+        return _pets.find { it.id == id }
     }
 }

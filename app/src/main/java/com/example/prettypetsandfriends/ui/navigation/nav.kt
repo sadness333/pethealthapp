@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.prettypetsandfriends.ui.screens.AddPetScreen
 import com.example.prettypetsandfriends.ui.screens.AiChatScreen
 import com.example.prettypetsandfriends.ui.screens.AuthScreen
 import com.example.prettypetsandfriends.ui.screens.CalendarScreen
@@ -29,6 +30,7 @@ fun NavigationPetApp() {
         composable("calendar") { CalendarScreen(navController) }
         composable("nutrition") { FeedingScreen(navController) }
         composable("profile") { UserProfileScreen(navController) }
+        composable("add_pet") { AddPetScreen(navController) }
         composable(
             route = "pet_profile/{petId}",
             arguments = listOf(navArgument("petId") { type = NavType.StringType })
