@@ -56,8 +56,9 @@ fun AiChatScreen(navController: NavController) {
                 showPetDropdown = showPetDropdown,
                 onPetClick = { showPetDropdown = true },
                 onDismiss = { showPetDropdown = false },
-                pets = pets
-            )
+                pets = pets,
+                name = "Ассистент",
+                )
         },
         bottomBar = { CustomBottomNavigation(navController) }
     ) { paddingValues ->

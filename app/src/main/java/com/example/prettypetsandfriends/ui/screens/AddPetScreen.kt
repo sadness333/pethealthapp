@@ -37,7 +37,8 @@ fun AddPetScreen(navController: NavController) {
                 showPetDropdown = showPetDropdown,
                 onPetClick = { showPetDropdown = true },
                 onDismiss = { showPetDropdown = false },
-                pets = pets
+                pets = pets,
+                name = "Добавление",
             )
         },
         bottomBar = { CustomBottomNavigation(navController) }

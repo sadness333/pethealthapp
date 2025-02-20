@@ -39,8 +39,9 @@ fun FeedingScreen(navController: NavController) {
                 showPetDropdown = showPetDropdown,
                 onPetClick = { showPetDropdown = true },
                 onDismiss = { showPetDropdown = false },
-                pets = pets
-            )
+                pets = pets,
+                name = "Питание",
+                )
         },
         bottomBar = { CustomBottomNavigation(navController) },
         floatingActionButton = {

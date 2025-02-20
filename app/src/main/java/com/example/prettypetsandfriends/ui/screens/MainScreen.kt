@@ -56,8 +56,9 @@ fun MainScreen(navController: NavController) {
                 showPetDropdown = showPetDropdown,
                 onPetClick = { showPetDropdown = true },
                 onDismiss = { showPetDropdown = false },
-                pets = pets
-            )
+                pets = pets,
+                name = "Главное меню",
+                )
         },
         bottomBar = { CustomBottomNavigation(navController) }
     ) { paddingValues ->

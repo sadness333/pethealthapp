@@ -68,8 +68,9 @@ fun HealthDiaryScreen(navController: NavController) {
                     showPetDropdown = showPetDropdown,
                     onPetClick = { showPetDropdown = true },
                     onDismiss = { showPetDropdown = false },
-                    pets = pets
-                )
+                    pets = pets,
+                    name = "Дневник здоровья",
+                    )
             },
             bottomBar = { CustomBottomNavigation(navController) }
         ) { paddingValues ->

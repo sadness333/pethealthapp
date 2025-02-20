@@ -69,7 +69,8 @@ fun PetProfileScreen(petId: String, navController: NavController) {
                 showPetDropdown = showPetDropdown,
                 onPetClick = { showPetDropdown = true },
                 onDismiss = { showPetDropdown = false },
-                pets = pets
+                pets = pets,
+                name = "Профиль питомца",
             )
         },
         bottomBar = { CustomBottomNavigation(navController) }
@@ -78,8 +79,8 @@ fun PetProfileScreen(petId: String, navController: NavController) {
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
                 ProfileHeader(pet)
@@ -99,17 +100,23 @@ fun PetProfileScreen(petId: String, navController: NavController) {
 @Composable
 private fun ProfileHeader(pet: PetProfile) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Аватар питомца
             Image(
                 painter = painterResource(pet.photoRes),
                 contentDescription = null,
@@ -122,11 +129,16 @@ private fun ProfileHeader(pet: PetProfile) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Имя питомца
             Text(
                 text = pet.name,
-                style = MaterialTheme.typography.headlineLarge
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Порода и возраст
             Text(
                 text = "${pet.breed}, ${pet.age}",
                 style = MaterialTheme.typography.titleMedium,
@@ -139,21 +151,44 @@ private fun ProfileHeader(pet: PetProfile) {
 @Composable
 private fun MedicalInfoCard(pet: PetProfile) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth()
+        ) {
+            // Заголовок карточки
             Text(
                 text = "Медицинские данные",
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp))
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
-            InfoRow("Вес", pet.weight, Icons.Default.Star)
-            InfoRow("Последний визит к ветеринару", pet.lastVetVisit, Icons.Default.Share)
+            // Вес питомца
+            InfoRow(
+                label = "Вес",
+                value = pet.weight,
+                icon = Icons.Default.Star
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Последний визит к ветеринару
+            InfoRow(
+                label = "Последний визит к ветеринару",
+                value = pet.lastVetVisit,
+                icon = Icons.Default.Share
+            )
         }
     }
 }
@@ -161,21 +196,33 @@ private fun MedicalInfoCard(pet: PetProfile) {
 @Composable
 private fun VaccinationCard(pet: PetProfile) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth()
+        ) {
+            // Заголовок карточки
             Text(
                 text = "Прививки",
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp))
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
+            // Список прививок
             pet.vaccinations.forEach { vaccine ->
-                VaccinationItem(vaccine)
+                VaccinationItem(vaccine = vaccine)
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -189,23 +236,27 @@ private fun InfoRow(label: String, value: String, icon: ImageVector) {
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Иконка
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp))
+            modifier = Modifier.size(24.dp)
+        )
 
         Spacer(modifier = Modifier.width(16.dp))
 
+        // Текст
         Column {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -216,20 +267,24 @@ private fun VaccinationItem(vaccine: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Иконка
         Icon(
             imageVector = Icons.Default.CheckCircle,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp))
+            modifier = Modifier.size(24.dp)
+        )
 
         Spacer(modifier = Modifier.width(16.dp))
 
+        // Название прививки
         Text(
             text = vaccine,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

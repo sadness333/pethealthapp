@@ -26,7 +26,8 @@ fun CustomTopBar(
     showPetDropdown: Boolean,
     onPetClick: () -> Unit,
     onDismiss: () -> Unit,
-    pets: List<PetProfile>
+    pets: List<PetProfile>,
+    name: String,
 ) {
     Surface(
         modifier = Modifier
@@ -56,7 +57,7 @@ fun CustomTopBar(
             }
 
             Text(
-                text = "МяуГав",
+                text = name,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
                     brush = Brush.horizontalGradient(
