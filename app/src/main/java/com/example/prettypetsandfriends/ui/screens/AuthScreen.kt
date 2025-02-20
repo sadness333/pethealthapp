@@ -28,7 +28,6 @@ fun AuthScreen(navController: NavController) {
             .fillMaxSize()
             .systemBarsPadding()
     ) {
-        // Используем Column без verticalScroll, а распределение элементов делаем равномерным
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -36,7 +35,6 @@ fun AuthScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Логотип
             Icon(
                 painter = painterResource(R.drawable.ic_pets_black),
                 contentDescription = "Логотип приложения",
@@ -44,7 +42,6 @@ fun AuthScreen(navController: NavController) {
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            // Карточка с формой авторизации
             Card(
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier.fillMaxWidth()

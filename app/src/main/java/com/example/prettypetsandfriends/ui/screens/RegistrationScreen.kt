@@ -27,7 +27,6 @@ fun RegistrationScreen(navController: NavController) {
             .fillMaxSize()
             .systemBarsPadding()
     ) {
-        // Используем равномерное распределение по вертикали
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -35,7 +34,6 @@ fun RegistrationScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Уменьшенный логотип
             Icon(
                 painter = painterResource(R.drawable.ic_pets_black),
                 contentDescription = "Логотип приложения",
@@ -43,7 +41,6 @@ fun RegistrationScreen(navController: NavController) {
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            // Карточка с формой регистрации
             Card(
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -61,7 +58,6 @@ fun RegistrationScreen(navController: NavController) {
                         color = MaterialTheme.colorScheme.primary
                     )
 
-                    // Поле email
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -76,7 +72,6 @@ fun RegistrationScreen(navController: NavController) {
                         }
                     )
 
-                    // Поле пароля
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -92,7 +87,6 @@ fun RegistrationScreen(navController: NavController) {
                         }
                     )
 
-                    // Поле подтверждения пароля
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
@@ -108,7 +102,6 @@ fun RegistrationScreen(navController: NavController) {
                         }
                     )
 
-                    // Кнопка регистрации
                     Button(
                         onClick = { /* Реализация регистрации */ },
                         modifier = Modifier
@@ -126,7 +119,6 @@ fun RegistrationScreen(navController: NavController) {
                         )
                     }
 
-                    // Ссылка на авторизацию
                     TextButton(
                         onClick = { navController.navigate("auth") },
                         modifier = Modifier.fillMaxWidth()
