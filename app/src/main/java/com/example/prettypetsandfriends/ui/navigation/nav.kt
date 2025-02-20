@@ -14,6 +14,7 @@ import com.example.prettypetsandfriends.ui.screens.FeedingScreen
 import com.example.prettypetsandfriends.ui.screens.HealthDiaryScreen
 import com.example.prettypetsandfriends.ui.screens.MainScreen
 import com.example.prettypetsandfriends.ui.screens.PetProfileScreen
+import com.example.prettypetsandfriends.ui.screens.RegistrationScreen
 import com.example.prettypetsandfriends.ui.screens.SplashScreen
 import com.example.prettypetsandfriends.ui.screens.UserProfileScreen
 
@@ -25,6 +26,7 @@ fun NavigationPetApp() {
         composable("splash") { SplashScreen(navController) }
         composable("main") { MainScreen(navController) }
         composable("auth") { AuthScreen(navController) }
+        composable("registration") { RegistrationScreen(navController) }
         composable("health_diary") { HealthDiaryScreen(navController) }
         composable("ai_assistant") { AiChatScreen(navController) }
         composable("calendar") { CalendarScreen(navController) }

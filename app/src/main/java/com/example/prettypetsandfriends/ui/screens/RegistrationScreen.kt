@@ -1,6 +1,5 @@
 package com.example.prettypetsandfriends.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -10,7 +9,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -18,9 +16,10 @@ import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
 
 @Composable
-fun AuthScreen(navController: NavController) {
+fun RegistrationScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -28,7 +27,7 @@ fun AuthScreen(navController: NavController) {
             .fillMaxSize()
             .systemBarsPadding()
     ) {
-        // Используем Column без verticalScroll, а распределение элементов делаем равномерным
+        // Используем равномерное распределение по вертикали
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -36,7 +35,7 @@ fun AuthScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Логотип
+            // Уменьшенный логотип
             Icon(
                 painter = painterResource(R.drawable.ic_pets_black),
                 contentDescription = "Логотип приложения",
@@ -44,7 +43,7 @@ fun AuthScreen(navController: NavController) {
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            // Карточка с формой авторизации
+            // Карточка с формой регистрации
             Card(
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -57,11 +56,12 @@ fun AuthScreen(navController: NavController) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Добро пожаловать!",
+                        text = "Регистрация",
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
 
+                    // Поле email
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -76,6 +76,7 @@ fun AuthScreen(navController: NavController) {
                         }
                     )
 
+                    // Поле пароля
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -91,8 +92,25 @@ fun AuthScreen(navController: NavController) {
                         }
                     )
 
+                    // Поле подтверждения пароля
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Подтвердите пароль") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        visualTransformation = PasswordVisualTransformation(),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Подтверждение пароля"
+                            )
+                        }
+                    )
+
+                    // Кнопка регистрации
                     Button(
-                        onClick = { navController.navigate("main") },
+                        onClick = { /* Реализация регистрации */ },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
@@ -102,67 +120,21 @@ fun AuthScreen(navController: NavController) {
                         )
                     ) {
                         Text(
-                            "Войти",
+                            "Зарегистрироваться",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
 
+                    // Ссылка на авторизацию
                     TextButton(
-                        onClick = { navController.navigate("registration") },
+                        onClick = { navController.navigate("auth") },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "Ещё нет аккаунта? Зарегистрироваться",
+                            "Уже есть аккаунт? Войти",
                             color = MaterialTheme.colorScheme.primary
                         )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Divider(
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
-                        Text(
-                            "или",
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                        Divider(
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = { /* Реализация авторизации через Google */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.google),
-                                contentDescription = "Google",
-                                tint = Color.Unspecified,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Продолжить с Google",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
                     }
                 }
             }

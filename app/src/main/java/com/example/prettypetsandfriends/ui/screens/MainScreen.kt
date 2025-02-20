@@ -65,7 +65,6 @@ fun MainScreen(navController: NavController) {
         Box(modifier = Modifier.fillMaxSize()) {
             ModernPetCareScreen(paddingValues, navController)
 
-            // Выпадающее меню для выбора питомца
             if (showPetDropdown) {
                 DropdownMenu(
                     expanded = showPetDropdown,
@@ -127,7 +126,6 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Header
         Column(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
@@ -163,7 +161,7 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
                     text = "Мои питомцы",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
                 )
-                TextButton(onClick = { /* Добавить питомца */ }) {
+                TextButton(onClick = { navController.navigate("add_pet") }) {
                     Text("Добавить +")
                 }
             }
