@@ -145,9 +145,9 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
             modifier = Modifier.padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { QuickActionCard("Медицина", R.drawable.ic_medicine) }
-            item { QuickActionCard("Прогулки", R.drawable.ic_grass) }
-            item { QuickActionCard("Анализы", R.drawable.ic_analytics) }
+            item { QuickActionCard("Документы", R.drawable.ic_doc, onClick = { navController.navigate("document") })}
+            item { QuickActionCard("Прогулки", R.drawable.ic_grass, onClick = {} ) }
+            item { QuickActionCard("Анализы", R.drawable.ic_analytics, onClick = {} ) }
         }
 
         // Pets Section
@@ -293,8 +293,9 @@ fun InfoChip(label: String, value: String) {
 }
 
 @Composable
-fun QuickActionCard(title: String, iconRes: Int) {
+fun QuickActionCard(title: String, iconRes: Int, onClick: () -> Unit) {
     Card(
+        onClick = onClick,
         modifier = Modifier.size(120.dp),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)

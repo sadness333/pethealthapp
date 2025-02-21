@@ -10,6 +10,7 @@ import com.example.prettypetsandfriends.ui.screens.AddPetScreen
 import com.example.prettypetsandfriends.ui.screens.AiChatScreen
 import com.example.prettypetsandfriends.ui.screens.AuthScreen
 import com.example.prettypetsandfriends.ui.screens.CalendarScreen
+import com.example.prettypetsandfriends.ui.screens.DocumentsScreen
 import com.example.prettypetsandfriends.ui.screens.FeedingScreen
 import com.example.prettypetsandfriends.ui.screens.HealthDiaryScreen
 import com.example.prettypetsandfriends.ui.screens.MainScreen
@@ -33,6 +34,7 @@ fun NavigationPetApp() {
         composable("nutrition") { FeedingScreen(navController) }
         composable("profile") { UserProfileScreen(navController) }
         composable("add_pet") { AddPetScreen(navController) }
+        composable("document") { DocumentsScreen(navController) }
         composable(
             route = "pet_profile/{petId}",
             arguments = listOf(navArgument("petId") { type = NavType.StringType })

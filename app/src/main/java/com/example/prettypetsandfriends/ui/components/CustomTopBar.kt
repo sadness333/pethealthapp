@@ -13,8 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
@@ -29,10 +31,14 @@ fun CustomTopBar(
     pets: List<PetProfile>,
     name: String,
 ) {
+    val density = LocalDensity.current
+    val statusBarHeightDp: Dp = with(density) {
+        WindowInsets.statusBars.getTop(density).toDp()
+    }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(90.dp)
             .shadow(
                 elevation = 12.dp,
                 shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
@@ -43,8 +49,9 @@ fun CustomTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
-                .padding(horizontal = 16.dp),
+                .padding( top = statusBarHeightDp)
+                .padding(horizontal = 16.dp)
+                .height(80.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
