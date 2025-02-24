@@ -26,19 +26,15 @@ fun AddPetScreen(navController: NavController) {
     var weight by remember { mutableStateOf("") }
     var lastVetVisit by remember { mutableStateOf("") }
     var vaccinations by remember { mutableStateOf("") }
-    var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
     val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
             CustomTopBar(
                 navController = navController,
-                showPetDropdown = showPetDropdown,
-                onPetClick = { showPetDropdown = true },
-                onDismiss = { showPetDropdown = false },
-                pets = pets,
                 name = "Добавление",
+                showBackButton = true,
+                onBackClick = { navController.popBackStack() }
             )
         },
         bottomBar = { CustomBottomNavigation(navController) }
