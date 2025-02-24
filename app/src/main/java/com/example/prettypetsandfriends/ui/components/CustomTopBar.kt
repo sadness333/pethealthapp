@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,16 +27,19 @@ import com.example.prettypetsandfriends.data.entites.PetProfile
 @Composable
 fun CustomTopBar(
     navController: NavController,
-    showPetDropdown: Boolean,
-    onPetClick: () -> Unit,
-    onDismiss: () -> Unit,
-    pets: List<PetProfile>,
+    showPetDropdown: Boolean = false,
+    onPetClick: () -> Unit = {},
+    onDismiss: () -> Unit = {},
+    pets: List<PetProfile> = emptyList(),
     name: String,
+    showBackButton: Boolean = false,
+    onBackClick: () -> Unit = {}
 ) {
     val density = LocalDensity.current
     val statusBarHeightDp: Dp = with(density) {
         WindowInsets.statusBars.getTop(density).toDp()
     }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -49,18 +54,29 @@ fun CustomTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding( top = statusBarHeightDp)
+                .padding(top = statusBarHeightDp)
                 .padding(horizontal = 16.dp)
                 .height(80.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(modifier = Modifier.size(48.dp).clickable { onPetClick() }) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_pets_black),
-                    contentDescription = "Питомец",
-                    modifier = Modifier.fillMaxSize().clip(CircleShape)
-                )
+            if (showBackButton) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Назад",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            else {
+                Box(modifier = Modifier.size(32.dp).clickable { onPetClick() }) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_pets_black),
+                        contentDescription = "Питомец",
+                        modifier = Modifier.fillMaxSize().clip(CircleShape)
+                    )
+                }
             }
 
             Text(
@@ -76,17 +92,23 @@ fun CustomTopBar(
                 )
             )
 
-            IconButton(onClick = { navController.navigate("profile") }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_person_black),
-                    contentDescription = "Профиль",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            if (!showBackButton) {
+                IconButton(onClick = { navController.navigate("profile") }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_person_black),
+                        contentDescription = "Профиль",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.size(32.dp))
             }
         }
     }
 
-    PetDropdownMenu(showPetDropdown, onDismiss, pets, navController)
+    if (!showBackButton && showPetDropdown) {
+        PetDropdownMenu(showPetDropdown, onDismiss, pets, navController)
+    }
 }
 
 @Composable

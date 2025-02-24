@@ -78,6 +78,7 @@ fun AddPetScreen(navController: NavController) {
                         value = age,
                         onValueChange = { age = it },
                         label = { Text("Возраст") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(12.dp))

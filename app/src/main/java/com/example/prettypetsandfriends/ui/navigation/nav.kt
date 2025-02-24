@@ -17,7 +17,10 @@ import com.example.prettypetsandfriends.ui.screens.MainScreen
 import com.example.prettypetsandfriends.ui.screens.PetProfileScreen
 import com.example.prettypetsandfriends.ui.screens.RegistrationScreen
 import com.example.prettypetsandfriends.ui.screens.SplashScreen
-import com.example.prettypetsandfriends.ui.screens.UserProfileScreen
+import com.example.prettypetsandfriends.ui.screens.StatisticsScreen
+import com.example.prettypetsandfriends.ui.screens.UserEditProfileScreen
+import com.example.prettypetsandfriends.ui.screens.UserMenuScreen
+import com.example.prettypetsandfriends.ui.screens.WeightTrackerScreen
 
 @Composable
 fun NavigationPetApp() {
@@ -32,9 +35,12 @@ fun NavigationPetApp() {
         composable("ai_assistant") { AiChatScreen(navController) }
         composable("calendar") { CalendarScreen(navController) }
         composable("nutrition") { FeedingScreen(navController) }
-        composable("profile") { UserProfileScreen(navController) }
+        composable("profile") { UserMenuScreen(navController)}
+        composable("edit_profile") { UserEditProfileScreen(navController) }
         composable("add_pet") { AddPetScreen(navController) }
         composable("document") { DocumentsScreen(navController) }
+        composable("stats") { StatisticsScreen(navController) }
+        composable("weight") { WeightTrackerScreen(navController) }
         composable(
             route = "pet_profile/{petId}",
             arguments = listOf(navArgument("petId") { type = NavType.StringType })

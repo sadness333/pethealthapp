@@ -1,7 +1,11 @@
 package com.example.prettypetsandfriends.ui.components
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -22,13 +26,25 @@ fun CustomBottomNavigation(navController: NavController) {
     )
 
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 8.dp
+        modifier = Modifier
+            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 16.dp
     ) {
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = item.title) },
-                label = { Text(item.title) },
+                icon = {
+                    Icon(
+                        painter = item.icon,
+                        contentDescription = item.title,
+                        modifier = Modifier.size(24.dp))
+                },
+                label = {
+                    Text(
+                        item.title,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
                 selected = currentRoute == item.route,
                 onClick = {
                     navController.navigate(item.route) {
@@ -41,8 +57,10 @@ fun CustomBottomNavigation(navController: NavController) {
                 },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
         }

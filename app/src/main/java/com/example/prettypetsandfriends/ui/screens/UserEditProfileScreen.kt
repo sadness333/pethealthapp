@@ -18,29 +18,22 @@ import com.example.prettypetsandfriends.data.entites.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserProfileScreen(navController: NavController) {
+fun UserEditProfileScreen(navController: NavController) {
     var name by remember { mutableStateOf("John Doe") }
     var email by remember { mutableStateOf("john.doe@example.com") }
     var phone by remember { mutableStateOf("+1 234 567 890") }
     var bio by remember { mutableStateOf("I love pets and technology!") }
-    var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
-
 
     Scaffold(
         topBar = {
             CustomTopBar(
                 navController = navController,
-                showPetDropdown = showPetDropdown,
-                onPetClick = { showPetDropdown = true },
-                onDismiss = { showPetDropdown = false },
-                pets = pets,
-                name = "Профиль",
+                name = "Редактирование",
+                showBackButton = true,
+                onBackClick = { navController.popBackStack() }
             )
         },
-        bottomBar = { CustomBottomNavigation(navController) }
     ) { paddingValues ->
         Column(
             modifier = Modifier

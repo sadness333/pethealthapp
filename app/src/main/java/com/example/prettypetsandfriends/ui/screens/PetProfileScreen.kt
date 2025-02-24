@@ -18,32 +18,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.data.entites.PetProfile
 import com.example.prettypetsandfriends.data.entites.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
@@ -52,8 +44,6 @@ import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 @Composable
 fun PetProfileScreen(petId: String, navController: NavController) {
     val pet = remember(petId) { PetsRepository.getPetById(petId) }
-    var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
 
     if (pet == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -66,11 +56,9 @@ fun PetProfileScreen(petId: String, navController: NavController) {
         topBar = {
             CustomTopBar(
                 navController = navController,
-                showPetDropdown = showPetDropdown,
-                onPetClick = { showPetDropdown = true },
-                onDismiss = { showPetDropdown = false },
-                pets = pets,
-                name = "Профиль питомца",
+                name = "Питомец",
+                showBackButton = true,
+                onBackClick = { navController.popBackStack() }
             )
         },
         bottomBar = { CustomBottomNavigation(navController) }
@@ -178,7 +166,7 @@ private fun MedicalInfoCard(pet: PetProfile) {
             InfoRow(
                 label = "Вес",
                 value = pet.weight,
-                icon = Icons.Default.Star
+                icon = painterResource(id = R.drawable.ic_weight)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -187,7 +175,7 @@ private fun MedicalInfoCard(pet: PetProfile) {
             InfoRow(
                 label = "Последний визит к ветеринару",
                 value = pet.lastVetVisit,
-                icon = Icons.Default.Share
+                icon = painterResource(id = R.drawable.ic_visit)
             )
         }
     }
@@ -229,7 +217,7 @@ private fun VaccinationCard(pet: PetProfile) {
 }
 
 @Composable
-private fun InfoRow(label: String, value: String, icon: ImageVector) {
+private fun InfoRow(label: String, value: String, icon: Painter) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -238,7 +226,7 @@ private fun InfoRow(label: String, value: String, icon: ImageVector) {
     ) {
         // Иконка
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)

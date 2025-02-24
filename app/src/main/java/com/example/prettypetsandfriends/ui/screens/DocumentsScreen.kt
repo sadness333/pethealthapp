@@ -39,8 +39,6 @@ import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
 @Composable
 fun DocumentsScreen(navController: NavController) {
-    var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
     val documents = remember {
         listOf(
             "Паспорт животного",
@@ -54,11 +52,9 @@ fun DocumentsScreen(navController: NavController) {
         topBar = {
             CustomTopBar(
                 navController = navController,
-                showPetDropdown = showPetDropdown,
-                onPetClick = { showPetDropdown = true },
-                onDismiss = { showPetDropdown = false },
-                pets = pets,
-                name = "Документы и анализы"
+                name = "Документы",
+                showBackButton = true,
+                onBackClick = { navController.popBackStack() }
             )
         },
         bottomBar = { CustomBottomNavigation(navController) }

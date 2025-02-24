@@ -37,15 +37,6 @@ import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
 @Composable
 fun MainScreen(navController: NavController) {
-    val selectedItem = remember { mutableStateOf("main") }
-    val items = listOf(
-        MenuItem("Главная", painterResource(id = R.drawable.ic_home_black), "main"),
-        MenuItem("Дневник", painterResource(id = R.drawable.ic_book_black), "health_diary"),
-        MenuItem("Питание", painterResource(id = R.drawable.ic_eating), "nutrition"),
-        MenuItem("Чат", painterResource(id = R.drawable.ic_chat_black), "ai_assistant"),
-        MenuItem("События", painterResource(id = R.drawable.ic_calendar_black), "calendar")
-    )
-
     var showPetDropdown by remember { mutableStateOf(false) }
     val pets = remember { PetsRepository.pets }
 
@@ -135,7 +126,7 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             Text(
-                text = "Jennifer!",
+                text = "Пользователь!",
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -146,8 +137,8 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { QuickActionCard("Документы", R.drawable.ic_doc, onClick = { navController.navigate("document") })}
-            item { QuickActionCard("Прогулки", R.drawable.ic_grass, onClick = {} ) }
-            item { QuickActionCard("Анализы", R.drawable.ic_analytics, onClick = {} ) }
+            item { QuickActionCard("Контроль веса", R.drawable.ic_weight, onClick = {navController.navigate("weight")} ) }
+            item { QuickActionCard("Статистика", R.drawable.ic_analytics, onClick = {navController.navigate("stats")} ) }
         }
 
         // Pets Section
