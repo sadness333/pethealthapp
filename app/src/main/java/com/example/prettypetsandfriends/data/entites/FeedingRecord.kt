@@ -5,8 +5,10 @@ import java.util.UUID
 
 data class FeedingRecord(
     val id: UUID = UUID.randomUUID(),
-    val foodType: String,
-    val quantity: String,
+    val foodName: String,
+    val type: FoodType,
+    val nutrition: NutritionData,
+    val quantity: Float,
     val feedingTime: LocalDateTime,
     val comment: String
 )
