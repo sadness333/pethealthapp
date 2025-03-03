@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.data.entites.PetProfile
+import com.example.prettypetsandfriends.data.entities.PetProfile
 
 @Composable
 fun CustomTopBar(
