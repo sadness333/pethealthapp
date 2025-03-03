@@ -1,5 +1,7 @@
 package com.example.prettypetsandfriends.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -26,7 +28,13 @@ import com.example.prettypetsandfriends.ui.screens.WeightTrackerScreen
 fun NavigationPetApp() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "splash") {
+    NavHost(
+        navController = navController,
+        startDestination = "splash",
+        enterTransition = { EnterTransition.None},
+        exitTransition = { ExitTransition.None},
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = {  ExitTransition.None }) {
         composable("splash") { SplashScreen(navController) }
         composable("main") { MainScreen(navController) }
         composable("auth") { AuthScreen(navController) }

@@ -52,7 +52,7 @@ fun FeedingScreen(navController: NavController) {
                 onPetClick = { showPetDropdown = true },
                 onDismiss = { showPetDropdown = false },
                 pets = pets,
-                name = "Ассистент",
+                name = "Питание",
             )
         },
         bottomBar = { CustomBottomNavigation(navController) },

@@ -4,21 +4,31 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
@@ -36,9 +46,7 @@ fun CustomTopBar(
     onBackClick: () -> Unit = {}
 ) {
     val density = LocalDensity.current
-    val statusBarHeightDp: Dp = with(density) {
-        WindowInsets.statusBars.getTop(density).toDp()
-    }
+    var buttonOffset by remember { mutableStateOf(DpOffset(0.dp, 0.dp)) }
 
     Surface(
         modifier = Modifier
@@ -54,7 +62,7 @@ fun CustomTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = statusBarHeightDp)
+                .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
                 .padding(horizontal = 16.dp)
                 .height(80.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -68,14 +76,36 @@ fun CustomTopBar(
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
-            }
-            else {
-                Box(modifier = Modifier.size(32.dp).clickable { onPetClick() }) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_pets_black),
-                        contentDescription = "Питомец",
-                        modifier = Modifier.fillMaxSize().clip(CircleShape)
-                    )
+            } else {
+                Box {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable { onPetClick() }
+                            .onGloballyPositioned { coordinates ->
+                                buttonOffset = DpOffset(
+                                    x = with(density) { coordinates.positionInRoot().x.toDp() - 25.dp},
+                                    y = with(density) { (coordinates.positionInRoot().y + coordinates.size.height).toDp() - 75.dp}
+                                )
+                            }
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_pets_black),
+                            contentDescription = "Питомец",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                        )
+                    }
+                    if (showPetDropdown) {
+                        PetDropdownMenu(
+                            expanded = showPetDropdown,
+                            onDismiss = onDismiss,
+                            pets = pets,
+                            navController = navController,
+                            offset = buttonOffset
+                        )
+                    }
                 }
             }
 
@@ -105,10 +135,6 @@ fun CustomTopBar(
             }
         }
     }
-
-    if (!showBackButton && showPetDropdown) {
-        PetDropdownMenu(showPetDropdown, onDismiss, pets, navController)
-    }
 }
 
 @Composable
@@ -116,28 +142,64 @@ fun PetDropdownMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     pets: List<PetProfile>,
-    navController: NavController
+    navController: NavController,
+    offset: DpOffset
 ) {
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+        offset = offset,
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .width(200.dp)
     ) {
-        pets.forEach { pet ->
-            DropdownMenuItem(
-                text = { Text(pet.name) },
-                onClick = {
-                    navController.navigate("pet_profile/${pet.id}")
-                    onDismiss()
+        Box(modifier = Modifier.requiredHeight(150.dp)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                pets.forEach { pet ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Image(
+                                    painter = painterResource(id = pet.photoRes ?: R.drawable.ic_pets_black),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = pet.name,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        },
+                        onClick = {
+                            navController.navigate("pet_profile/${pet.id}")
+                            onDismiss()
+                        }
+                    )
                 }
-            )
-        }
-        DropdownMenuItem(
-            text = { Text("Добавить питомца") },
-            onClick = {
-                navController.navigate("add_pet")
-                onDismiss()
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_add),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Добавить питомца")
+                        }
+                    },
+                    onClick = {
+                        navController.navigate("add_pet")
+                        onDismiss()
+                    }
+                )
             }
-        )
+        }
     }
 }
