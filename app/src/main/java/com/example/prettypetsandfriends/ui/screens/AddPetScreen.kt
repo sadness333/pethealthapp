@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.prettypetsandfriends.data.entites.PetProfile
-import com.example.prettypetsandfriends.data.entites.PetsRepository
+import com.example.prettypetsandfriends.data.entities.PetProfile
+import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation

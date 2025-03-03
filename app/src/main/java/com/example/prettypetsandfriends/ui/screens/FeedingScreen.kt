@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,9 +20,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.data.entites.FeedingRecord
-import com.example.prettypetsandfriends.data.entites.FoodType
-import com.example.prettypetsandfriends.data.entites.NutritionData
+import com.example.prettypetsandfriends.data.entities.FeedingRecord
+import com.example.prettypetsandfriends.data.entities.FoodType
+import com.example.prettypetsandfriends.data.entities.NutritionData
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import java.time.LocalDate

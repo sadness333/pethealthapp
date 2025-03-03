@@ -1,4 +1,4 @@
-package com.example.prettypetsandfriends.data.entites
+package com.example.prettypetsandfriends.data.entities
 
 data class NutritionData(
     val calories: Float = 0f,

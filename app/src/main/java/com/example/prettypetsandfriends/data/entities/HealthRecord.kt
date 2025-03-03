@@ -1,4 +1,4 @@
-package com.example.prettypetsandfriends.data.entites
+package com.example.prettypetsandfriends.data.entities
 import androidx.compose.runtime.Immutable
 import java.util.UUID
 
