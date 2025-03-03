@@ -51,52 +51,6 @@ fun MainScreen(navController: NavController) {
         Box(modifier = Modifier.fillMaxSize()) {
             ModernPetCareScreen(paddingValues, navController)
 
-            if (showPetDropdown) {
-                DropdownMenu(
-                    expanded = showPetDropdown,
-                    onDismissRequest = { showPetDropdown = false },
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .background(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                ) {
-                    pets.forEach { pet ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = pet.name,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                            },
-                            onClick = {
-                                showPetDropdown = false
-                            }
-                        )
-                    }
-
-                    DropdownMenuItem(
-                        text = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_add),
-                                    contentDescription = "Добавить",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Text("Добавить питомца")
-                            }
-                        },
-                        onClick = {
-                            navController.navigate("add_pet")
-                            showPetDropdown = false
-                        }
-                    )
-                }
-            }
         }
     }
 }

@@ -23,6 +23,7 @@ import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.data.entities.FeedingRecord
 import com.example.prettypetsandfriends.data.entities.FoodType
 import com.example.prettypetsandfriends.data.entities.NutritionData
+import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import java.time.LocalDate
@@ -36,6 +37,8 @@ fun FeedingScreen(navController: NavController) {
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var dailyGoal by remember { mutableStateOf(2000f) }
+    var showPetDropdown by remember { mutableStateOf(false) }
+    val pets = remember { PetsRepository.pets }
 
     val dailyCalories = remember(feedingRecords) {
         feedingRecords.sumOf { it.nutrition.calories.toDouble() }.toFloat()
@@ -45,11 +48,11 @@ fun FeedingScreen(navController: NavController) {
         topBar = {
             CustomTopBar(
                 navController = navController,
-                name = "Питание",
-                showPetDropdown = false,
-                onPetClick = {},
-                onDismiss = {},
-                pets = emptyList()
+                showPetDropdown = showPetDropdown,
+                onPetClick = { showPetDropdown = true },
+                onDismiss = { showPetDropdown = false },
+                pets = pets,
+                name = "Ассистент",
             )
         },
         bottomBar = { CustomBottomNavigation(navController) },

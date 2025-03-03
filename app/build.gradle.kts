@@ -44,7 +44,6 @@ dependencies {
     implementation("com.google.firebase:firebase-bom:33.9.0")
     implementation(libs.firebase.messaging.ktx)
     implementation("com.google.firebase:firebase-analytics:22.2.0")
-    implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.datastore:datastore-core:1.0.0")
     implementation("androidx.work:work-runtime-ktx:2.8.1")
