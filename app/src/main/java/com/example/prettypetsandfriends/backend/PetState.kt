@@ -43,4 +43,8 @@ class PetState {
         )
         selectedPet = allPets.firstOrNull()
     }
+
+    fun getPetById(id: String): PetProfile? {
+        return allPets.find { it.id == id }
+    }
 }

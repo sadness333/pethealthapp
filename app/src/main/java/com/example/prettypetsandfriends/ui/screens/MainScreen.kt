@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
+import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.PetProfile
 import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
@@ -33,7 +34,6 @@ import com.example.prettypetsandfriends.ui.components.CustomTopBar
 @Composable
 fun MainScreen(navController: NavController) {
     var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
 
     Scaffold(
         topBar = {
@@ -56,7 +56,7 @@ fun MainScreen(navController: NavController) {
 
 @Composable
 fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavController) {
-    val pets = remember { PetsRepository.pets }
+    val petState = LocalPetState.current
 
     Column(
         modifier = Modifier
@@ -89,7 +89,6 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
             item { QuickActionCard("Статистика", R.drawable.ic_analytics, onClick = {navController.navigate("stats")} ) }
         }
 
-        // Pets Section
         Column(modifier = Modifier.padding(24.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -109,13 +108,12 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                items(pets) { pet ->
+                items(petState.allPets) { pet ->
                     ModernPetCard(pet = pet, navController = navController)
                 }
             }
         }
 
-        // Health Section
         Card(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
@@ -140,16 +138,6 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = 8.dp)
                 )
-                Button(
-                    onClick = { /* */ },
-                    modifier = Modifier.padding(top = 16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("Напомнить мне")
-                }
             }
         }
     }
