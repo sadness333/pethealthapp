@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
+import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.PetProfile
 
 @Composable
@@ -40,11 +41,11 @@ fun CustomTopBar(
     showPetDropdown: Boolean = false,
     onPetClick: () -> Unit = {},
     onDismiss: () -> Unit = {},
-    pets: List<PetProfile> = emptyList(),
     name: String,
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {}
 ) {
+    val petState = LocalPetState.current
     val density = LocalDensity.current
     var buttonOffset by remember { mutableStateOf(DpOffset(0.dp, 0.dp)) }
 
@@ -90,7 +91,7 @@ fun CustomTopBar(
                             }
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_pets_black),
+                            painter = painterResource(id = petState.selectedPet?.photoRes ?: R.drawable.ic_pets_black),
                             contentDescription = "Питомец",
                             modifier = Modifier
                                 .fillMaxSize()
@@ -101,7 +102,7 @@ fun CustomTopBar(
                         PetDropdownMenu(
                             expanded = showPetDropdown,
                             onDismiss = onDismiss,
-                            pets = pets,
+                            pets = petState.allPets,
                             navController = navController,
                             offset = buttonOffset
                         )
@@ -145,6 +146,8 @@ fun PetDropdownMenu(
     navController: NavController,
     offset: DpOffset
 ) {
+    val petState = LocalPetState.current
+
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
@@ -177,7 +180,7 @@ fun PetDropdownMenu(
                             }
                         },
                         onClick = {
-                            navController.navigate("pet_profile/${pet.id}")
+                            petState.selectPet(pet)
                             onDismiss()
                         }
                     )

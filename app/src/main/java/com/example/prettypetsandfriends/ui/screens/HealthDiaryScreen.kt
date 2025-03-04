@@ -64,7 +64,6 @@ fun HealthDiaryScreen(navController: NavController) {
                     showPetDropdown = showPetDropdown,
                     onPetClick = { showPetDropdown = true },
                     onDismiss = { showPetDropdown = false },
-                    pets = pets,
                     name = "Дневник здоровья",
                     )
             },

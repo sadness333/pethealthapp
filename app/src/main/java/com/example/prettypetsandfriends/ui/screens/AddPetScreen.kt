@@ -15,11 +15,14 @@ import com.example.prettypetsandfriends.data.entities.PetProfile
 import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.R
+import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 
 
 @Composable
 fun AddPetScreen(navController: NavController) {
+    val petState = LocalPetState.current
+
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var breed by remember { mutableStateOf("") }
@@ -111,7 +114,7 @@ fun AddPetScreen(navController: NavController) {
                     Button(
                         onClick = {
                             val newPet = PetProfile(
-                                id = (PetsRepository.pets.size + 1).toString(),
+                                id = (petState.allPets.size + 1).toString(),
                                 name = name,
                                 age = age,
                                 breed = breed,
@@ -120,7 +123,7 @@ fun AddPetScreen(navController: NavController) {
                                 vaccinations = vaccinations.split(","),
                                 photoRes = R.drawable.ic_pets_black
                             )
-                            PetsRepository.addPet(newPet)
+                            petState.addPet(newPet)
                             navController.popBackStack()
                         },
                         modifier = Modifier

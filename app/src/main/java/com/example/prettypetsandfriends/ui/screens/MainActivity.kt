@@ -6,14 +6,18 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.backend.PetState
 import com.example.prettypetsandfriends.ui.navigation.NavigationPetApp
 import com.example.prettypetsandfriends.ui.theme.PrettypetsandfriendsTheme
 
@@ -26,6 +30,8 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var currentTheme by remember { mutableStateOf(AppTheme.SYSTEM) }
             val scope = rememberCoroutineScope()
+            val petState = remember { PetState().apply { loadPets() } }
+
 
             LaunchedEffect(Unit) {
                 ThemeManager.getThemeFlow(context).collect { theme ->
@@ -44,7 +50,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NavigationPetApp()
+                    CompositionLocalProvider(LocalPetState provides petState) {
+                        NavigationPetApp()
+                    }
                 }
             }
         }
