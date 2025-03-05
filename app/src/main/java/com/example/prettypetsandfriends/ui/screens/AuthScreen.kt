@@ -1,5 +1,11 @@
 package com.example.prettypetsandfriends.ui.screens
 
+import android.app.Activity
+import android.content.Context
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,17 +17,31 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.ServerValue
+import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
 fun AuthScreen(navController: NavController) {
@@ -30,6 +50,28 @@ fun AuthScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val googleSignInClient = remember {
+        GoogleSignIn.getClient(
+            context,
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(context.getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+        )
+    }
+
+    val googleAuthLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            handleGoogleSignInResult(task, navController, context, scope)
+        } else {
+            errorMessage = "Авторизация через Google отменена"
+        }
+    }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -123,7 +165,7 @@ fun AuthScreen(navController: NavController) {
                                     errorMessage = when (e) {
                                         is FirebaseAuthInvalidUserException -> "Пользователь не найден"
                                         is FirebaseAuthInvalidCredentialsException -> "Неверный пароль"
-                                        else -> "Ошибка входа: Пустые строчки ввода"
+                                        else -> "Ошибка входа: Пустой ввод"
                                     }
                                 } finally {
                                     isLoading = false
@@ -175,7 +217,14 @@ fun AuthScreen(navController: NavController) {
                     }
 
                     OutlinedButton(
-                        onClick = { /* Реализация авторизации через Google */ },
+                        onClick = { scope.launch {
+                            try {
+                                val signInIntent = googleSignInClient.signInIntent
+                                googleAuthLauncher.launch(signInIntent)
+                            } catch (e: Exception) {
+                                errorMessage = "Ошибка запуска Google Sign-In: ${e.localizedMessage}"
+                            }
+                        } },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
@@ -202,6 +251,55 @@ fun AuthScreen(navController: NavController) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+private fun handleGoogleSignInResult(
+    task: Task<GoogleSignInAccount>,
+    navController: NavController,
+    context: Context,
+    scope: CoroutineScope
+) {
+    scope.launch {
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+
+            val authResult = Firebase.auth.signInWithCredential(credential).await()
+            val user = authResult.user
+
+            if (user != null) {
+                val userData = hashMapOf(
+                    "email" to user.email,
+                    "name" to user.displayName,
+                    "photoUrl" to user.photoUrl?.toString(),
+                    "createdAt" to ServerValue.TIMESTAMP
+                )
+
+                Firebase.database.reference
+                    .child("users")
+                    .child(user.uid)
+                    .setValue(userData)
+                    .await()
+            }
+
+            navController.navigate("main") {
+                popUpTo("auth") { inclusive = true }
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is ApiException -> when (e.statusCode) {
+                    CommonStatusCodes.CANCELED -> "Авторизация отменена"
+                    CommonStatusCodes.TIMEOUT -> "Таймаут подключения"
+                    else -> "Ошибка Google: ${e.statusCode}"
+                }
+                is CancellationException -> "Операция отменена"
+                else -> "Ошибка авторизации: ${e.localizedMessage}"
+            }
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, error, Toast.LENGTH_LONG).show()
             }
         }
     }

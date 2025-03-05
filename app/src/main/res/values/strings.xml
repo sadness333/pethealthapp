@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">petapp</string>
+    <string name="default_web_client_id">mypolka-4cf39</string>
 </resources>
