@@ -16,7 +16,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.data.entities.HealthRecord
-import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.data.entities.RecordType
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
@@ -55,7 +54,6 @@ object HealthRecordsRepository {
 fun HealthDiaryScreen(navController: NavController) {
     val records = remember { HealthRecordsRepository.getSampleRecords() }
     var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
 
     Scaffold(
             topBar = {

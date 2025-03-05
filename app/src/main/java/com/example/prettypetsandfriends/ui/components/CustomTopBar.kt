@@ -153,8 +153,8 @@ fun PetDropdownMenu(
         onDismissRequest = onDismiss,
         offset = offset,
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.surface)
-            .width(200.dp)
+            .background(MaterialTheme.colorScheme.onPrimary)
+            .width(140.dp)
     ) {
         Box(modifier = Modifier.requiredHeight(150.dp)) {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {

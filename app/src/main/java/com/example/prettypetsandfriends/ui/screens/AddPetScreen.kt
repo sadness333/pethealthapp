@@ -12,7 +12,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.data.entities.PetProfile
-import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
@@ -91,7 +90,7 @@ fun AddPetScreen(navController: NavController) {
                     OutlinedTextField(
                         value = weight,
                         onValueChange = { weight = it },
-                        label = { Text("Вес") },
+                        label = { Text("Вес (кг)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -118,7 +117,7 @@ fun AddPetScreen(navController: NavController) {
                                 name = name,
                                 age = age,
                                 breed = breed,
-                                weight = weight,
+                                weight = weight + " кг",
                                 lastVetVisit = lastVetVisit,
                                 vaccinations = vaccinations.split(","),
                                 photoRes = R.drawable.ic_pets_black

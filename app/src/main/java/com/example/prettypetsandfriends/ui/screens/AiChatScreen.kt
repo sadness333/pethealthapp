@@ -34,7 +34,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.data.entities.ChatMessage
-import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
@@ -43,7 +42,6 @@ fun AiChatScreen(navController: NavController) {
     var messageText by remember { mutableStateOf("") }
     val chatMessages = remember { mutableStateListOf<ChatMessage>() }
     var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
 
 
     Scaffold(

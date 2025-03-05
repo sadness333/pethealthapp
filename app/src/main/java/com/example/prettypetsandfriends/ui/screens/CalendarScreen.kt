@@ -62,7 +62,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.data.entities.CalendarEvent
-import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import java.time.DayOfWeek
@@ -80,7 +79,6 @@ fun CalendarScreen(navController: NavController) {
     var showAddEventDialog by remember { mutableStateOf(false) }
     var eventToEdit by remember { mutableStateOf<CalendarEvent?>(null) }
     var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
 
 
     Scaffold(

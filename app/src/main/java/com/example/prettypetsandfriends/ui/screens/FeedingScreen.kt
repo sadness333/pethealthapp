@@ -23,10 +23,8 @@ import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.data.entities.FeedingRecord
 import com.example.prettypetsandfriends.data.entities.FoodType
 import com.example.prettypetsandfriends.data.entities.NutritionData
-import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
@@ -35,10 +33,8 @@ import kotlin.math.abs
 fun FeedingScreen(navController: NavController) {
     var feedingRecords by remember { mutableStateOf(dummyFeedingRecords) }
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var dailyGoal by remember { mutableStateOf(2000f) }
     var showPetDropdown by remember { mutableStateOf(false) }
-    val pets = remember { PetsRepository.pets }
 
     val dailyCalories = remember(feedingRecords) {
         feedingRecords.sumOf { it.nutrition.calories.toDouble() }.toFloat()

@@ -27,7 +27,6 @@ import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.PetProfile
-import com.example.prettypetsandfriends.data.entities.PetsRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
