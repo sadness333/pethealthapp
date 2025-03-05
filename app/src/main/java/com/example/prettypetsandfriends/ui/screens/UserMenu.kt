@@ -43,6 +43,8 @@ import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.data.entities.UserProfile
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.ui.components.ThemeSelectionDialog
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
@@ -52,6 +54,11 @@ fun UserMenuScreen(navController: NavController) {
     val context = LocalContext.current
     var showThemeDialog by remember { mutableStateOf(false) }
     var currentTheme by remember { mutableStateOf(AppTheme.SYSTEM) }
+    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        .requestIdToken(context.getString(R.string.default_web_client_id))
+        .requestEmail()
+        .build()
+    val googleSignInClient = GoogleSignIn.getClient(context, gso)
     val coroutineScope = rememberCoroutineScope()
 
     val user = remember {
@@ -134,10 +141,14 @@ fun UserMenuScreen(navController: NavController) {
                 MenuCard(
                     title = "Выйти из аккаунта",
                     icon = Icons.Default.ExitToApp,
-                    onClick = { Firebase.auth.signOut()
-                        navController.navigate("auth") {
-                            popUpTo("main") { inclusive = true }
-                        } },
+                    onClick = {
+                        Firebase.auth.signOut()
+                        googleSignInClient.signOut().addOnCompleteListener {
+                            navController.navigate("auth") {
+                                popUpTo("main") { inclusive = true }
+                            }
+                        }
+                    },
                     isDestructive = true
                 )
             }
