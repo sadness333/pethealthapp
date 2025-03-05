@@ -29,7 +29,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             var currentTheme by remember { mutableStateOf(AppTheme.SYSTEM) }
-            val scope = rememberCoroutineScope()
             val petState = remember { PetState().apply { loadPets() } }
 
 

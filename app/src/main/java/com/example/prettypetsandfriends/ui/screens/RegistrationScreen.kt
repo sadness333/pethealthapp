@@ -14,12 +14,25 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.ServerValue
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun RegistrationScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val database = Firebase.database.reference
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -102,8 +115,57 @@ fun RegistrationScreen(navController: NavController) {
                         }
                     )
 
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    }
+
+                    errorMessage?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+
                     Button(
-                        onClick = { /* Реализация регистрации */ },
+                        onClick = {
+                            if (password != confirmPassword) {
+                                errorMessage = "Пароли не совпадают"
+                                return@Button
+                            }
+
+                            scope.launch {
+                                isLoading = true
+                                errorMessage = null
+                                try {
+                                    val authResult = Firebase.auth
+                                        .createUserWithEmailAndPassword(email, password)
+                                        .await()
+
+                                    val user = hashMapOf(
+                                        "email" to email,
+                                        "createdAt" to ServerValue.TIMESTAMP
+                                    )
+
+                                    database.child("users").child(authResult.user!!.uid)
+                                        .setValue(user)
+                                        .await()
+
+                                    navController.navigate("main") {
+                                        popUpTo("registration") { inclusive = true }
+                                    }
+                                } catch (e: Exception) {
+                                    errorMessage = when (e) {
+                                        is FirebaseAuthWeakPasswordException -> "Слабый пароль (минимум 6 символов)"
+                                        is FirebaseAuthInvalidCredentialsException -> "Неверный формат email"
+                                        is FirebaseAuthUserCollisionException -> "Пользователь уже существует"
+                                        else -> "Ошибка регистрации: Ввод пустых полей"
+                                    }
+                                } finally {
+                                    isLoading = false
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),

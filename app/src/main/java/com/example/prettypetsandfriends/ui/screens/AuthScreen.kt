@@ -16,11 +16,20 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun AuthScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -88,8 +97,39 @@ fun AuthScreen(navController: NavController) {
                         }
                     )
 
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    }
+
+                    errorMessage?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+
                     Button(
-                        onClick = { navController.navigate("main") },
+                        onClick = {
+                            scope.launch {
+                                isLoading = true
+                                errorMessage = null
+                                try {
+                                    Firebase.auth.signInWithEmailAndPassword(email, password).await()
+                                    navController.navigate("main") {
+                                        popUpTo("auth") { inclusive = true }
+                                    }
+                                } catch (e: Exception) {
+                                    errorMessage = when (e) {
+                                        is FirebaseAuthInvalidUserException -> "Пользователь не найден"
+                                        is FirebaseAuthInvalidCredentialsException -> "Неверный пароль"
+                                        else -> "Ошибка входа: Пустые строчки ввода"
+                                    }
+                                } finally {
+                                    isLoading = false
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
