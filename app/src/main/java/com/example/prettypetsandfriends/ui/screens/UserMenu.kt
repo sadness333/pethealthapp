@@ -43,6 +43,8 @@ import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.data.entities.UserProfile
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.ui.components.ThemeSelectionDialog
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 
 @Composable
@@ -130,9 +132,12 @@ fun UserMenuScreen(navController: NavController) {
                 )
 
                 MenuCard(
-                    title = "Выйти",
+                    title = "Выйти из аккаунта",
                     icon = Icons.Default.ExitToApp,
-                    onClick = { /* Логика выхода */ },
+                    onClick = { Firebase.auth.signOut()
+                        navController.navigate("auth") {
+                            popUpTo("main") { inclusive = true }
+                        } },
                     isDestructive = true
                 )
             }
