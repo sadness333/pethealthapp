@@ -15,12 +15,14 @@ data class Pet(
     val vaccinations: List<Vaccination> = emptyList()
 ) {
     data class Vaccination(
-        val id: String = UUID.randomUUID().toString(),
-        val name: String,
-        val date: Long,
-        val nextDate: Long? = null,
-        val clinic: String? = null
+        val id: String = "",
+        val petId: String = "",
+        val name: String = "",
+        val date: Long = 0L,
+        val nextDate: Long = 0L,
+        val vetPerson: String = ""
     )
+
     data class PetStatistics(
         val vetVisitsCount: Int = 0,
         val avgHealthScore: Double = 0.0,

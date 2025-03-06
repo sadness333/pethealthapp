@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,8 +30,13 @@ import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.backend.getYearsText
 import com.example.prettypetsandfriends.data.entities.Pet
+import com.example.prettypetsandfriends.data.entities.PetEvent
+import com.example.prettypetsandfriends.data.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun MainScreen(navController: NavController) {
@@ -66,6 +72,10 @@ fun MainScreen(navController: NavController) {
 @Composable
 fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavController) {
     val petState = LocalPetState.current
+    val user by UserRepository().observeUserData().collectAsState(initial = null)
+    val event by UserRepository().observeNearestEvent(petState).collectAsState(initial = null)
+
+
 
     Column(
         modifier = Modifier
@@ -83,7 +93,7 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             Text(
-                text = "Пользователь!",
+                text = "${user?.name ?: "Гость"}!",
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -123,6 +133,13 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
             }
         }
 
+        NotifyCard(event = event)
+    }
+}
+
+@Composable
+fun NotifyCard(event: PetEvent?) {
+    event?.let {
         Card(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
@@ -142,7 +159,7 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = "Вакцинация • 15 июля 2024",
+                    text = "${event.type} • ${formatEventDate(event.timestamp)}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = 8.dp)
@@ -150,6 +167,11 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
             }
         }
     }
+}
+
+fun formatEventDate(timestamp: Long): String {
+    val date = Date(timestamp)
+    return SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(date)
 }
 
 @Composable
