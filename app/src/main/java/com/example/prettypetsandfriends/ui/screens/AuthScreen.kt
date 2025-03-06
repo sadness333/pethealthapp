@@ -23,6 +23,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
+import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.backend.PetState
+import com.example.prettypetsandfriends.data.repository.PetRepository
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -45,6 +48,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
 fun AuthScreen(navController: NavController) {
+    val petState = LocalPetState.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -158,6 +162,7 @@ fun AuthScreen(navController: NavController) {
                                 errorMessage = null
                                 try {
                                     Firebase.auth.signInWithEmailAndPassword(email, password).await()
+                                    petState.loadPets(Firebase.auth.currentUser!!.uid)
                                     navController.navigate("main") {
                                         popUpTo("auth") { inclusive = true }
                                     }

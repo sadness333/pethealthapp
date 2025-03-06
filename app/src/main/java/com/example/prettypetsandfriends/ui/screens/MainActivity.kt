@@ -1,6 +1,7 @@
 package com.example.prettypetsandfriends.ui.screens
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -30,13 +31,7 @@ class MainActivity : ComponentActivity() {
             var currentTheme by remember { mutableStateOf(AppTheme.SYSTEM) }
             val petRepository = remember { PetRepository() }
             val petState = remember { PetState(petRepository) }
-            val currentUser = petRepository.getCurrentUser()
 
-            LaunchedEffect(Unit) {
-                if (currentUser != null) {
-                    petState.loadPets(currentUser.uid)
-                }
-            }
 
             LaunchedEffect(Unit) {
                 ThemeManager.getThemeFlow(context).collect { theme ->

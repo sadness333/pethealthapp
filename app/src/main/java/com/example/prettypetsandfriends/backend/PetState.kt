@@ -7,7 +7,7 @@ import com.example.prettypetsandfriends.data.entities.Pet
 import com.example.prettypetsandfriends.data.repository.PetRepository
 
 
-class PetState(private val petRepository: PetRepository) {
+class PetState(val petRepository: PetRepository) {
     var selectedPet by mutableStateOf<Pet?>(null)
     var allPets by mutableStateOf<List<Pet>>(emptyList())
 

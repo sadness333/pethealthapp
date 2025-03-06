@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,14 @@ import com.example.prettypetsandfriends.ui.components.CustomTopBar
 @Composable
 fun MainScreen(navController: NavController) {
     var showPetDropdown by remember { mutableStateOf(false) }
+    val petState = LocalPetState.current
+    val currentUser = petState.petRepository.getCurrentUser()
+
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            petState.loadPets(currentUser.uid)
+        }
+    }
 
     Scaffold(
         topBar = {
