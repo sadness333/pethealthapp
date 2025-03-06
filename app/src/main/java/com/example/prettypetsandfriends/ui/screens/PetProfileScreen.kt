@@ -34,8 +34,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.backend.getYearsText
+import com.example.prettypetsandfriends.data.entities.Pet
 import com.example.prettypetsandfriends.data.entities.PetProfile
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
@@ -86,7 +89,7 @@ fun PetProfileScreen(petId: String, navController: NavController) {
 }
 
 @Composable
-private fun ProfileHeader(pet: PetProfile) {
+private fun ProfileHeader(pet: Pet) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -104,9 +107,8 @@ private fun ProfileHeader(pet: PetProfile) {
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Аватар питомца
-            Image(
-                painter = painterResource(pet.photoRes),
+            AsyncImage(
+                model = pet.photoUrl,
                 contentDescription = null,
                 modifier = Modifier
                     .size(120.dp)
@@ -117,7 +119,6 @@ private fun ProfileHeader(pet: PetProfile) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Имя питомца
             Text(
                 text = pet.name,
                 style = MaterialTheme.typography.headlineMedium,
@@ -126,9 +127,8 @@ private fun ProfileHeader(pet: PetProfile) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Порода и возраст
             Text(
-                text = "${pet.breed}, ${pet.age}",
+                text = "${getYearsText(pet.age)}, порода: ${pet.breed}",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
             )
@@ -137,7 +137,7 @@ private fun ProfileHeader(pet: PetProfile) {
 }
 
 @Composable
-private fun MedicalInfoCard(pet: PetProfile) {
+private fun MedicalInfoCard(pet: Pet) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -154,7 +154,6 @@ private fun MedicalInfoCard(pet: PetProfile) {
                 .padding(24.dp)
                 .fillMaxWidth()
         ) {
-            // Заголовок карточки
             Text(
                 text = "Медицинские данные",
                 style = MaterialTheme.typography.titleLarge,
@@ -162,19 +161,17 @@ private fun MedicalInfoCard(pet: PetProfile) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Вес питомца
             InfoRow(
                 label = "Вес",
-                value = pet.weight,
+                value = pet.statistics.lastWeight.toString(),
                 icon = painterResource(id = R.drawable.ic_weight)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Последний визит к ветеринару
             InfoRow(
                 label = "Последний визит к ветеринару",
-                value = pet.lastVetVisit,
+                value = pet.statistics.lastVetVisit.toString(),
                 icon = painterResource(id = R.drawable.ic_visit)
             )
         }
@@ -182,7 +179,7 @@ private fun MedicalInfoCard(pet: PetProfile) {
 }
 
 @Composable
-private fun VaccinationCard(pet: PetProfile) {
+private fun VaccinationCard(pet: Pet) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,7 +196,6 @@ private fun VaccinationCard(pet: PetProfile) {
                 .padding(24.dp)
                 .fillMaxWidth()
         ) {
-            // Заголовок карточки
             Text(
                 text = "Прививки",
                 style = MaterialTheme.typography.titleLarge,
@@ -207,9 +203,8 @@ private fun VaccinationCard(pet: PetProfile) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Список прививок
             pet.vaccinations.forEach { vaccine ->
-                VaccinationItem(vaccine = vaccine)
+                VaccinationItem(vaccine = vaccine.toString())
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
@@ -224,7 +219,6 @@ private fun InfoRow(label: String, value: String, icon: Painter) {
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Иконка
         Icon(
             painter = icon,
             contentDescription = null,
@@ -234,7 +228,6 @@ private fun InfoRow(label: String, value: String, icon: Painter) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Текст
         Column {
             Text(
                 text = label,
@@ -258,7 +251,6 @@ private fun VaccinationItem(vaccine: String) {
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Иконка
         Icon(
             imageVector = Icons.Default.CheckCircle,
             contentDescription = null,
@@ -268,7 +260,6 @@ private fun VaccinationItem(vaccine: String) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Название прививки
         Text(
             text = vaccine,
             style = MaterialTheme.typography.bodyLarge,

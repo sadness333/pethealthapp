@@ -3,48 +3,43 @@ package com.example.prettypetsandfriends.backend
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.data.entities.PetProfile
+import com.example.prettypetsandfriends.data.entities.Pet
+import com.example.prettypetsandfriends.data.repository.PetRepository
 
-class PetState {
-    var selectedPet by mutableStateOf<PetProfile?>(null)
-    var allPets by mutableStateOf<List<PetProfile>>(emptyList())
 
-    fun selectPet(pet: PetProfile) {
+class PetState(private val petRepository: PetRepository) {
+    var selectedPet by mutableStateOf<Pet?>(null)
+    var allPets by mutableStateOf<List<Pet>>(emptyList())
+
+    fun selectPet(pet: Pet) {
         selectedPet = pet
     }
 
-    fun addPet(pet: PetProfile) {
-        allPets = allPets + pet
+    suspend fun loadPets(uid: String) {
+        try {
+            val petList = petRepository.observeUserPets(uid)
+            petList.collect { pets ->
+                allPets = pets.map { pet ->
+                    Pet(
+                        id = pet.id,
+                        name = pet.name,
+                        type = pet.type,
+                        breed = pet.breed,
+                        age = pet.age,
+                        ownerId = pet.ownerId,
+                        photoUrl = pet.photoUrl,
+                        statistics = pet.statistics,
+                        nutrition = pet.nutrition
+                    )
+                }
+                selectedPet = allPets.firstOrNull()
+            }
+        } catch (e: Exception) {
+            println("Error loading pets: ${e.message}")
+        }
     }
 
-    fun loadPets() {
-        allPets = listOf(
-            PetProfile(
-                id = "1",
-                name = "Morphy",
-                age = "2 года",
-                breed = "Британская короткошерстная",
-                weight = "5.2 кг",
-                lastVetVisit = "15.10.2023",
-                vaccinations = listOf("Бешенство", "Панлейкопения"),
-                photoRes = R.drawable.ic_pets_black
-            ),
-            PetProfile(
-                id = "2",
-                name = "Kitten",
-                age = "3 года",
-                breed = "Мейн-кун",
-                weight = "6.0 кг",
-                lastVetVisit = "10.10.2023",
-                vaccinations = listOf("Бешенство", "Калицивироз"),
-                photoRes = R.drawable.ic_grass
-            )
-        )
-        selectedPet = allPets.firstOrNull()
-    }
-
-    fun getPetById(id: String): PetProfile? {
+    fun getPetById(id: String): Pet? {
         return allPets.find { it.id == id }
     }
 }

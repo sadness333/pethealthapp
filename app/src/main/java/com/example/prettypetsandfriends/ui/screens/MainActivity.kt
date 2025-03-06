@@ -11,13 +11,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.backend.PetState
+import com.example.prettypetsandfriends.data.repository.PetRepository
 import com.example.prettypetsandfriends.ui.navigation.NavigationPetApp
 import com.example.prettypetsandfriends.ui.theme.PrettypetsandfriendsTheme
 
@@ -29,8 +28,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             var currentTheme by remember { mutableStateOf(AppTheme.SYSTEM) }
-            val petState = remember { PetState().apply { loadPets() } }
+            val petRepository = remember { PetRepository() }
+            val petState = remember { PetState(petRepository) }
+            val currentUser = petRepository.getCurrentUser()
 
+            LaunchedEffect(Unit) {
+                if (currentUser != null) {
+                    petState.loadPets(currentUser.uid)
+                }
+            }
 
             LaunchedEffect(Unit) {
                 ThemeManager.getThemeFlow(context).collect { theme ->

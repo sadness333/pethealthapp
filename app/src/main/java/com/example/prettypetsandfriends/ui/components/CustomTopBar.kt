@@ -31,9 +31,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
-import com.example.prettypetsandfriends.data.entities.PetProfile
+import com.example.prettypetsandfriends.data.entities.Pet
 
 @Composable
 fun CustomTopBar(
@@ -90,12 +91,14 @@ fun CustomTopBar(
                                 )
                             }
                     ) {
-                        Image(
-                            painter = painterResource(id = petState.selectedPet?.photoRes ?: R.drawable.ic_pets_black),
-                            contentDescription = "Питомец",
+                        AsyncImage(
+                            model = petState.selectedPet?.photoUrl ?: R.drawable.ic_pets_black,
+                            contentDescription = "Фото питомца",
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(CircleShape)
+                                .clip(CircleShape),
+                            placeholder = painterResource(id = R.drawable.ic_pets_black),
+                            error = painterResource(id = R.drawable.ic_pets_black)
                         )
                     }
                     if (showPetDropdown) {
@@ -142,7 +145,7 @@ fun CustomTopBar(
 fun PetDropdownMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    pets: List<PetProfile>,
+    pets: List<Pet>,
     navController: NavController,
     offset: DpOffset
 ) {
@@ -156,7 +159,7 @@ fun PetDropdownMenu(
             .background(MaterialTheme.colorScheme.onPrimary)
             .width(140.dp)
     ) {
-        Box(modifier = Modifier.requiredHeight(150.dp)) {
+        Box(modifier = Modifier.heightIn(min = 30.dp, max=150.dp)) {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 pets.forEach { pet ->
                     DropdownMenuItem(
@@ -165,12 +168,15 @@ fun PetDropdownMenu(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Image(
-                                    painter = painterResource(id = pet.photoRes ?: R.drawable.ic_pets_black),
-                                    contentDescription = null,
+                                AsyncImage(
+                                    model = pet.photoUrl,
+                                    contentDescription = "Фото питомца",
                                     modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(CircleShape)
+                                        .width(30.dp)
+                                        .height(30.dp)
+                                        .clip(CircleShape),
+                                    placeholder = painterResource(id = R.drawable.ic_pets_black),
+                                    error = painterResource(id = R.drawable.ic_pets_black)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(

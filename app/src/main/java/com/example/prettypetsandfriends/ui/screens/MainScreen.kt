@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,9 +23,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
-import com.example.prettypetsandfriends.data.entities.PetProfile
+import com.example.prettypetsandfriends.backend.getYearsText
+import com.example.prettypetsandfriends.data.entities.Pet
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 
@@ -42,7 +43,7 @@ fun MainScreen(navController: NavController) {
                 onPetClick = { showPetDropdown = true },
                 onDismiss = { showPetDropdown = false },
                 name = "Главное меню",
-                )
+            )
         },
         bottomBar = { CustomBottomNavigation(navController) }
     ) { paddingValues ->
@@ -143,7 +144,7 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
 }
 
 @Composable
-fun ModernPetCard(pet: PetProfile, navController: NavController) {
+fun ModernPetCard(pet: Pet, navController: NavController) {
     Card(
         modifier = Modifier
             .width(280.dp)
@@ -162,8 +163,8 @@ fun ModernPetCard(pet: PetProfile, navController: NavController) {
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_pets_black),
+                    AsyncImage(
+                        model = pet.photoUrl,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -175,7 +176,7 @@ fun ModernPetCard(pet: PetProfile, navController: NavController) {
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "${pet.age}, ${pet.breed}",
+                        text = "${getYearsText(pet.age)}, порода: ${pet.breed}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -188,7 +189,7 @@ fun ModernPetCard(pet: PetProfile, navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                InfoChip("Вес", "${pet.weight}")
+                InfoChip("Вес", "${pet.statistics.lastWeight} кг")
                 InfoChip("Последний визит", "2 дн. назад")
             }
         }
@@ -246,3 +247,4 @@ fun QuickActionCard(title: String, iconRes: Int, onClick: () -> Unit) {
         }
     }
 }
+
