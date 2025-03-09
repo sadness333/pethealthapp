@@ -26,6 +26,24 @@ class UserRepository {
 
     fun getCurrentUserId(): String? = auth.currentUser?.uid
 
+    suspend fun updateUserProfile(
+        name: String,
+        email: String,
+        phone: String,
+        bio: String,
+        photoUrl: String?
+    ) {
+        val uid = getCurrentUserId() ?: return
+        val updates = mapOf(
+            "name" to name,
+            "email" to email,
+            "phone" to phone,
+            "bio" to bio,
+            "photoUrl" to photoUrl
+        )
+        database.child("users/$uid").updateChildren(updates).await()
+    }
+
     fun observeUserData(): Flow<User> = callbackFlow {
         val uid = auth.currentUser?.uid ?: run {
             close()

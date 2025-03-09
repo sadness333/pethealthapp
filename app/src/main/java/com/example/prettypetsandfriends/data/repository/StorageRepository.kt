@@ -19,4 +19,15 @@ class StorageRepository {
             throw Exception("Ошибка загрузки изображения: ${e.message}")
         }
     }
+
+    suspend fun uploadUserImage(userId: String, fileUri: Uri): String {
+        return try {
+            val imageRef = storage.child("users_avatars/$userId/${UUID.randomUUID()}")
+            val uploadTask = imageRef.putFile(fileUri).await()
+            val downloadUrl = imageRef.downloadUrl.await()
+            downloadUrl.toString()
+        } catch (e: Exception) {
+            throw Exception("Ошибка загрузки изображения: ${e.message}")
+        }
+    }
 }

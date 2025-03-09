@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,8 +40,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
+import com.example.prettypetsandfriends.data.entities.User
 import com.example.prettypetsandfriends.data.entities.UserProfile
+import com.example.prettypetsandfriends.data.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.ui.components.ThemeSelectionDialog
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -60,14 +64,7 @@ fun UserMenuScreen(navController: NavController) {
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
     val coroutineScope = rememberCoroutineScope()
-
-    val user = remember {
-        UserProfile(
-            name = "Иван Петров",
-            email = "ivan.petrov@example.com",
-            avatarRes = R.drawable.ic_person_black
-        )
-    }
+    val user by UserRepository().observeUserData().collectAsState(initial = null)
 
     LaunchedEffect(Unit) {
         ThemeManager.getThemeFlow(context).collect { theme ->
@@ -157,7 +154,8 @@ fun UserMenuScreen(navController: NavController) {
 }
 
 @Composable
-private fun ProfileCard(user: UserProfile) {
+private fun ProfileCard(user: User?) {
+    if (user != null) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -178,13 +176,14 @@ private fun ProfileCard(user: UserProfile) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Image(
-                    painter = painterResource(id = user.avatarRes),
-                    contentDescription = "Аватар",
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                )
+                    AsyncImage(
+                        model = user.photoUrl,
+                        contentDescription = "Аватар",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                    )
+
 
                 Column {
                     Text(
@@ -201,7 +200,7 @@ private fun ProfileCard(user: UserProfile) {
                 }
             }
         }
-    }
+    } }
 }
 
 @Composable

@@ -6,6 +6,7 @@ data class User(
     val phone: String = "",
     val name: String = "",
     val photoUrl: String = "",
+    val bio: String = "",
     val pets: Map<String, Boolean> = emptyMap(),
     val createdAt: Long = System.currentTimeMillis()
 )
