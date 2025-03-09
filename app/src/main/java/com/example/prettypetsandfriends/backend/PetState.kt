@@ -32,7 +32,7 @@ class PetState(val petRepository: PetRepository) {
                         nutrition = pet.nutrition
                     )
                 }
-                selectedPet = allPets.firstOrNull()
+                selectedPet = selectedPet ?: allPets.firstOrNull()
             }
         } catch (e: Exception) {
             println("Error loading pets: ${e.message}")

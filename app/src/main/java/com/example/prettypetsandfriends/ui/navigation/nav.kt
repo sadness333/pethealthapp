@@ -33,6 +33,7 @@ import com.example.prettypetsandfriends.ui.screens.WeightTrackerScreen
 @Composable
 fun NavigationPetApp() {
     val navController = rememberNavController()
+    val petState = LocalPetState.current
 
     NavHost(
         navController = navController,
@@ -52,7 +53,7 @@ fun NavigationPetApp() {
         composable("profile") { UserMenuScreen(navController)}
         composable("edit_profile") { UserEditProfileScreen(navController) }
         composable("add_pet") { AddPetScreen(navController) }
-        composable("document") { DocumentsScreen(navController) }
+        composable("document") { petState.selectedPet?.let { it1 -> DocumentsScreen(navController, it1.id) } }
         composable("stats") { StatisticsScreen(navController) }
         composable("weight") { WeightTrackerScreen(navController) }
         composable(
