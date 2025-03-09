@@ -55,7 +55,7 @@ fun NavigationPetApp() {
         composable("add_pet") { AddPetScreen(navController) }
         composable("document") { petState.selectedPet?.let { it1 -> DocumentsScreen(navController, it1.id) } }
         composable("stats") { StatisticsScreen(navController) }
-        composable("weight") { WeightTrackerScreen(navController) }
+        composable("weight") { petState.selectedPet?.let { it1 -> WeightTrackerScreen(navController, it1.id) } }
         composable(
             route = "pet_profile/{petId}",
             arguments = listOf(navArgument("petId") { type = NavType.StringType })
