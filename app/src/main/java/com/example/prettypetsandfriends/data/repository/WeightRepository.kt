@@ -52,4 +52,17 @@ class WeightRepository {
             throw Exception("Ошибка сохранения: ${e.message}")
         }
     }
+
+    suspend fun deleteWeight(entryId: String, petId: String?) {
+        try {
+            database.child("pets")
+                .child(petId.toString())
+                .child("weightHistory")
+                .child(entryId)
+                .removeValue()
+                .await()
+        } catch (e: Exception) {
+            throw Exception("Ошибка удаления: ${e.message}")
+        }
+    }
 }

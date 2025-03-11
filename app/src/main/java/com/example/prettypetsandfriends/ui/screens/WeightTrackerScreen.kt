@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
@@ -48,6 +49,7 @@ fun WeightTrackerScreen(navController: NavController) {
     val weightRepo = remember { WeightRepository() }
     var weightHistory by remember { mutableStateOf(emptyList<WeightHistory>()) }
     var showDialog by remember { mutableStateOf(false) }
+    var newNotes by remember { mutableStateOf("") }
     var newWeight by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val petId = LocalPetState.current.selectedPet?.id
@@ -111,13 +113,22 @@ fun WeightTrackerScreen(navController: NavController) {
             onDismissRequest = { showDialog = false },
             title = { Text("Новая запись") },
             text = {
-                OutlinedTextField(
-                    value = newWeight,
-                    onValueChange = { newWeight = it },
-                    label = { Text("Вес (кг)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    OutlinedTextField(
+                        value = newWeight,
+                        onValueChange = { newWeight = it },
+                        label = { Text("Вес (кг)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newNotes,
+                        onValueChange = { newNotes = it },
+                        label = { Text("Заметки") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 Button(
@@ -126,12 +137,14 @@ fun WeightTrackerScreen(navController: NavController) {
                             try {
                                 weightRepo.addWeight(
                                     weight = newWeight.toDouble(),
-                                    petId = petId
+                                    petId = petId,
+                                    notes = newNotes
                                 )
                                 newWeight = ""
+                                newNotes = ""
                                 showDialog = false
                             } catch (e: Exception) {
-                                // Показать ошибку
+                                // Обработка ошибок
                             }
                         }
                     },
@@ -144,6 +157,9 @@ fun WeightTrackerScreen(navController: NavController) {
 
 @Composable
 private fun HistoryItem(entry: WeightHistory) {
+    val petId = LocalPetState.current.selectedPet?.id
+    val scope = rememberCoroutineScope()
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val primaryColor = colorScheme.primary
 
     Card(
@@ -176,6 +192,16 @@ private fun HistoryItem(entry: WeightHistory) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = colorScheme.onSurface.copy(alpha = 0.8f)
                     )
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            "Удалить",
+                            tint = colorScheme.error
+                        )
+                    }
                 }
                 entry.notes.takeIf { it.isNotEmpty() }?.let {
                     Spacer(Modifier.height(4.dp))
@@ -184,6 +210,7 @@ private fun HistoryItem(entry: WeightHistory) {
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurface.copy(alpha = 0.6f)
                     )
+
                 }
             }
             Text(
@@ -194,7 +221,37 @@ private fun HistoryItem(entry: WeightHistory) {
             )
         }
     }
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Удалить запись?") },
+            text = { Text("Вы уверены что хотите удалить эту запись?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            WeightRepository().deleteWeight(entry.id, petId)
+                            showDeleteDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Удалить")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
 }
+
 
 @Composable
 private fun WeightChart(entries: List<WeightHistory>) {
