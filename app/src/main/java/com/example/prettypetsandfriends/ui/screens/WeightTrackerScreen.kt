@@ -44,13 +44,13 @@ import java.util.Locale
 import kotlin.math.max
 
 @Composable
-fun WeightTrackerScreen(navController: NavController, petId: String) {
+fun WeightTrackerScreen(navController: NavController) {
     val weightRepo = remember { WeightRepository() }
     var weightHistory by remember { mutableStateOf(emptyList<WeightHistory>()) }
     var showDialog by remember { mutableStateOf(false) }
     var newWeight by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val petId = LocalPetState.current.selectedPet?.id
 
     LaunchedEffect(petId) {
         try {

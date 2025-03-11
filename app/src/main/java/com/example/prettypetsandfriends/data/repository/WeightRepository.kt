@@ -18,7 +18,7 @@ class WeightRepository {
     private val database = Firebase.database.reference
     private val weightNode = database.child("weightHistory")
 
-    fun getWeightHistory(petId: String): Flow<List<WeightHistory>> = callbackFlow {
+    fun getWeightHistory(petId: String?): Flow<List<WeightHistory>> = callbackFlow {
         val query = weightNode.orderByChild("petId").equalTo(petId)
         val listener = query.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -35,7 +35,7 @@ class WeightRepository {
         awaitClose { query.removeEventListener(listener) }
     }
 
-    suspend fun addWeight(weight: Double, petId: String, notes: String = "") {
+    suspend fun addWeight(weight: Double, petId: String?, notes: String = "") {
         try {
             val key = weightNode.push().key ?: throw Exception("Ошибка генерации ключа")
             val entry = WeightHistory(

@@ -14,7 +14,7 @@ class StorageRepository {
 
     suspend fun uploadDocument(
         userId: String,
-        petId: String,
+        petId: String?,
         fileUri: Uri,
         title: String
     ): Document {
@@ -40,7 +40,7 @@ class StorageRepository {
         }
     }
 
-    suspend fun getPetDocuments(userId: String, petId: String): List<Document> {
+    suspend fun getPetDocuments(userId: String, petId: String?): List<Document> {
         return try {
             val listResult = documentsRef.child("$userId/$petId").listAll().await()
             listResult.items.mapNotNull { item ->

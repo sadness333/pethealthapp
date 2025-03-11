@@ -41,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
+import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.Document
 import com.example.prettypetsandfriends.data.repository.PetRepository
 import com.example.prettypetsandfriends.data.repository.StorageRepository
@@ -55,11 +56,12 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun DocumentsScreen(navController: NavController, petId: String) {
+fun DocumentsScreen(navController: NavController) {
     val storageRepo = remember { StorageRepository() }
     val petRepository = remember { PetRepository() }
     val currentUser = petRepository.getCurrentUser()
     val context = LocalContext.current
+    val petId = LocalPetState.current.selectedPet?.id
 
     var documents by remember { mutableStateOf<List<Document>>(emptyList()) }
     var showUploadDialog by remember { mutableStateOf(false) }
@@ -161,12 +163,12 @@ fun DocumentsScreen(navController: NavController, petId: String) {
                             selectedFileUri?.let { uri ->
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
-                                        storageRepo.uploadDocument(
-                                            userId = uid,
-                                            petId = petId,
-                                            fileUri = uri,
-                                            title = documentTitle
-                                        )
+                                            storageRepo.uploadDocument(
+                                                userId = uid,
+                                                petId = petId,
+                                                fileUri = uri,
+                                                title = documentTitle
+                                            )
                                         withContext(Dispatchers.Main) {
                                             documents = storageRepo.getPetDocuments(uid, petId)
                                             showUploadDialog = false
