@@ -1,5 +1,6 @@
 package com.example.prettypetsandfriends.data.repository
 
+import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.WeightEntry
 import com.example.prettypetsandfriends.data.entities.WeightHistory
 import com.google.firebase.database.DataSnapshot
@@ -16,9 +17,9 @@ import java.time.ZoneId
 
 class WeightRepository {
     private val database = Firebase.database.reference
-    private val weightNode = database.child("weightHistory")
 
     fun getWeightHistory(petId: String?): Flow<List<WeightHistory>> = callbackFlow {
+        val weightNode = database.child("pets").child(petId.toString()).child("weightHistory")
         val query = weightNode.orderByChild("petId").equalTo(petId)
         val listener = query.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -36,6 +37,7 @@ class WeightRepository {
     }
 
     suspend fun addWeight(weight: Double, petId: String?, notes: String = "") {
+        val weightNode = database.child("pets").child(petId.toString()).child("weightHistory")
         try {
             val key = weightNode.push().key ?: throw Exception("Ошибка генерации ключа")
             val entry = WeightHistory(

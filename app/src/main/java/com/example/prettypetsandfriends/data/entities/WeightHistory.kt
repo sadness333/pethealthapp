@@ -1,7 +1,5 @@
 package com.example.prettypetsandfriends.data.entities
 
-import java.time.LocalDate
-
 data class WeightHistory(
     val id: String = "",
     val petId: String? = "",
