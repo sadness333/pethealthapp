@@ -150,6 +150,12 @@ fun WeightTrackerScreen(navController: NavController) {
                     },
                     enabled = newWeight.isNotEmpty()
                 ) { Text("Сохранить") }
+
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Отмена")
+                }
             }
         )
     }

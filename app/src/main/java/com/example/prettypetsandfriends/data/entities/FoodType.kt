@@ -1,13 +1,12 @@
 package com.example.prettypetsandfriends.data.entities
 
-import androidx.annotation.DrawableRes
 import com.example.prettypetsandfriends.R
 
 enum class FoodType(
     val displayName: String,
-    @DrawableRes val iconRes: Int
+    val iconRes: Int
 ) {
-    DRY("Сухой", R.drawable.ic_weight),
-    WET("Влажный", R.drawable.ic_grass),
+    DRY("Сухой", R.drawable.ic_dry),
+    WET("Влажный", R.drawable.ic_water),
     HOMEMADE("Домашний", R.drawable.ic_eating)
 }

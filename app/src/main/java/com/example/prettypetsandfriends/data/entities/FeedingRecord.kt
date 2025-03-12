@@ -1,14 +1,12 @@
 package com.example.prettypetsandfriends.data.entities
 
-import java.time.LocalDateTime
-import java.util.UUID
-
 data class FeedingRecord(
-    val id: UUID = UUID.randomUUID(),
+    val id: String = "",
     val foodName: String,
     val type: FoodType,
     val nutrition: NutritionData,
     val quantity: Float,
-    val feedingTime: LocalDateTime,
-    val comment: String
+    val feedingTime: String,
+    val comment: String = "",
+    val petId: String,
 )
