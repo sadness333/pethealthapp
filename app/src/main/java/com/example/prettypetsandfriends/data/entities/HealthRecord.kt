@@ -1,17 +1,15 @@
 package com.example.prettypetsandfriends.data.entities
-import androidx.compose.runtime.Immutable
-import java.util.UUID
 
-@Immutable
+import com.google.firebase.database.PropertyName
+
 data class HealthRecord(
-    val id: String = UUID.randomUUID().toString(),
-    val date: String,
-    val title: String,
-    val description: String,
-    val type: RecordType,
-    val photos: List<Int> = emptyList()
+    val id: String = "",
+    val date: String = "",
+    val description: String = "",
+    @PropertyName("petId")
+    val petId: String = "",
+    val title: String = "",
+    val type: String = "",
+    @PropertyName("photoUrls")
+    val photoUrls: List<String> = emptyList()
 )
-
-enum class RecordType {
-    WEIGHT, VACCINATION, SYMPTOM, MEDICATION, OTHER
-}
