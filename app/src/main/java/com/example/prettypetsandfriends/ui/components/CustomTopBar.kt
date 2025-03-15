@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
@@ -35,6 +37,7 @@ import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.Pet
+import com.example.prettypetsandfriends.data.repository.UserRepository
 
 @Composable
 fun CustomTopBar(
@@ -48,6 +51,7 @@ fun CustomTopBar(
 ) {
     val petState = LocalPetState.current
     val density = LocalDensity.current
+    val user by UserRepository().observeUserData().collectAsState(initial = null)
     var buttonOffset by remember { mutableStateOf(DpOffset(0.dp, 0.dp)) }
 
     Surface(
@@ -127,11 +131,15 @@ fun CustomTopBar(
             )
 
             if (!showBackButton) {
-                IconButton(onClick = { navController.navigate("profile") }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_person_black),
+                IconButton(onClick = { navController.navigate("profile") },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(32.dp)) {
+                    AsyncImage(
+                        model = user?.photoUrl,
+                        modifier = Modifier.fillMaxSize(),
                         contentDescription = "Профиль",
-                        tint = MaterialTheme.colorScheme.primary
+                        contentScale = ContentScale.Crop
                     )
                 }
             } else {
