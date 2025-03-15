@@ -34,9 +34,10 @@ import com.example.prettypetsandfriends.data.entities.PetEvent
 import com.example.prettypetsandfriends.data.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Locale
+
 
 @Composable
 fun MainScreen(navController: NavController) {
@@ -140,6 +141,9 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
 @Composable
 fun NotifyCard(event: PetEvent?) {
     event?.let {
+        val dateInput = LocalDate.parse(event.date)
+        val date = dateInput.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru")))
+
         Card(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
@@ -159,7 +163,7 @@ fun NotifyCard(event: PetEvent?) {
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = "${event.type} • ${formatEventDate(event.timestamp)}",
+                    text = "${event.title} • $date ${event.time}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = 8.dp)
@@ -168,12 +172,6 @@ fun NotifyCard(event: PetEvent?) {
         }
     }
 }
-
-fun formatEventDate(timestamp: Long): String {
-    val date = Date(timestamp)
-    return SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(date)
-}
-
 @Composable
 fun ModernPetCard(pet: Pet, navController: NavController) {
     Card(

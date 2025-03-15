@@ -163,7 +163,6 @@ fun CalendarScreen(navController: NavController) {
     eventToEdit?.let { event ->
         EditEventDialog(
             event = event,
-            petId = petId,
             onDismiss = { eventToEdit = null },
             onEditEvent = { editedEvent ->
                 CalendarRepository.updateEvent(petId, editedEvent)
@@ -609,7 +608,7 @@ fun AddEventDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val date = Instant.ofEpochMilli(dateState.selectedDateMillis!!)
+                    val date = Instant.ofEpochMilli(dateState.selectedDateMillis ?: System.currentTimeMillis())
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate()
                     val newEvent = CalendarEvent(
@@ -649,7 +648,6 @@ fun AddEventDialog(
 @Composable
 fun EditEventDialog(
     event: CalendarEvent,
-    petId: String,
     onDismiss: () -> Unit,
     onEditEvent: (CalendarEvent) -> Unit
 ) {

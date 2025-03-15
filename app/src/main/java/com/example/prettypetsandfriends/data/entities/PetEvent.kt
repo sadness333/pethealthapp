@@ -4,6 +4,9 @@ data class PetEvent(
     val id: String = "",
     val petId: String = "",
     val type: String = "",
-    val timestamp: Long = 0L,
+    val title: String = "",
+    val date: String = "",
+    val time: String = "",
+    val notificationEnabled: Boolean = false,
     val vetPerson: String = ""
 )

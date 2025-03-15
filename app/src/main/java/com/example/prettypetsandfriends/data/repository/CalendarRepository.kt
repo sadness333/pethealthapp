@@ -45,7 +45,6 @@ object CalendarRepository {
             "repeatMode" to event.repeatMode?.name,
             "daysOfWeek" to event.daysOfWeek.map { it.name },
             "notificationEnabled" to event.notificationEnabled,
-            "color" to event.color.value.toLong(),
             "petId" to event.petId
         )
         getEventsRef(petId).child(event.id.toString()).setValue(eventData)

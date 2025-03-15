@@ -18,7 +18,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class UserRepository {
     private val auth = FirebaseAuth.getInstance()
@@ -65,130 +66,37 @@ class UserRepository {
         awaitClose { database.removeEventListener(listener) }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun updateUserProfile(name: String, photoUrl: String?) {
-        val uid = getCurrentUserId() ?: return
-        val updates = mapOf(
-            "name" to name,
-            "photoUrl" to photoUrl
-        )
-        database.child("users/$uid").updateChildren(updates).await()
-    }
-
-    fun observeUserPets(): Flow<List<Pet>> = callbackFlow {
-        val uid = getCurrentUserId() ?: run {
-            close()
-            return@callbackFlow
-        }
-
-        val listener = database.child("users/$uid/pets")
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val petIds = snapshot.children.mapNotNull { it.key }
-                    val pets = mutableListOf<Pet>()
-
-                    petIds.forEach { petId ->
-                        database.child("pets/$petId").get().addOnSuccessListener { petSnapshot ->
-                            petSnapshot.getValue(Pet::class.java)?.let {
-                                pets.add(it.copy(id = petId))
-                                if (pets.size == petIds.size) {
-                                    trySend(pets)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    close(error.toException())
-                }
-            })
-
-        awaitClose { database.removeEventListener(listener) }
-    }.flowOn(Dispatchers.IO)
-
-    suspend fun getPetDetails(petId: String): Pet? {
-        return withContext(Dispatchers.IO) {
-            database.child("pets/$petId").get().await()
-                .getValue(Pet::class.java)
-                ?.copy(id = petId)
-        }
-    }
-    // endregion
-
-    // region Health Data
-    fun observeWeightHistory(petId: String): Flow<List<WeightHistory>> = callbackFlow {
-        val listener = database.child("weightHistory").orderByChild("petId").equalTo(petId)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val history = snapshot.children.mapNotNull {
-                        it.key?.let { it1 -> it.getValue(WeightHistory::class.java)?.copy(id = it1) }
-                    }
-                    trySend(history)
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    close(error.toException())
-                }
-            })
-
-        awaitClose { database.removeEventListener(listener) }
-    }.flowOn(Dispatchers.IO)
-
-    fun observeVaccinations(petId: String): Flow<List<Pet.Vaccination>> = callbackFlow {
-        val listener = database.child("vaccinations").orderByChild("petId").equalTo(petId)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val vaccines = snapshot.children.mapNotNull {
-                        it.key?.let { it1 -> it.getValue(Pet.Vaccination::class.java)?.copy(id = it1) }
-                    }
-                    trySend(vaccines)
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    close(error.toException())
-                }
-            })
-
-        awaitClose { database.removeEventListener(listener) }
-    }.flowOn(Dispatchers.IO)
-    // endregion
-
-    // region Documents & Events
-    fun observeDocuments(petId: String): Flow<List<Document>> = callbackFlow {
-        val listener = database.child("documents").orderByChild("petId").equalTo(petId)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val docs = snapshot.children.mapNotNull {
-                        it.key?.let { it1 -> it.getValue(Document::class.java)?.copy(id = it1) }
-                    }
-                    trySend(docs)
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    close(error.toException())
-                }
-            })
-
-        awaitClose { database.removeEventListener(listener) }
-    }.flowOn(Dispatchers.IO)
-
     fun observeNearestEvent(petState: PetState): Flow<PetEvent?> = callbackFlow {
-        val eventsRef = database.child("events")
+        val petsRef = database.child("pets")
+        val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val events = snapshot.children.mapNotNull { ds ->
-                    ds.getValue(PetEvent::class.java)?.copy(id = ds.key.toString())
+                val allEvents = snapshot.children.flatMap { petSnapshot ->
+                    val eventsSnapshot = petSnapshot.child("events")
+                    eventsSnapshot.children.mapNotNull { eventSnapshot ->
+                        eventSnapshot.getValue(PetEvent::class.java)
+                            ?.copy(id = eventSnapshot.key.toString())
+                    }
                 }
-
                 val requiredPetIds = petState.allPets.map { it.id }
                 val now = System.currentTimeMillis()
 
-                val validEvents = events.filter { event ->
-                    event.petId in requiredPetIds && event.timestamp > now
+                val validEvents = allEvents.filter { event ->
+                    val eventTime = try {
+                        dateTimeFormat.parse("${event.date} ${event.time}")?.time ?: 0L
+                    } catch (e: Exception) {
+                        0L
+                    }
+                    event.petId in requiredPetIds && eventTime > now
                 }
-
-                val nearestEvent = validEvents.minByOrNull { it.timestamp }
+                val nearestEvent = validEvents.minByOrNull { event ->
+                    try {
+                        dateTimeFormat.parse("${event.date} ${event.time}")?.time ?: Long.MAX_VALUE
+                    } catch (e: Exception) {
+                        Long.MAX_VALUE
+                    }
+                }
 
                 trySend(nearestEvent)
             }
@@ -198,11 +106,10 @@ class UserRepository {
             }
         }
 
-        eventsRef.addValueEventListener(listener)
+        petsRef.addValueEventListener(listener)
 
         awaitClose {
-            eventsRef.removeEventListener(listener)
+            petsRef.removeEventListener(listener)
         }
     }.flowOn(Dispatchers.IO)
-
 }
