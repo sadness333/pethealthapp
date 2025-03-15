@@ -4,33 +4,49 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.data.repository.PetRepository
 import com.example.prettypetsandfriends.data.repository.StorageRepository
 import com.example.prettypetsandfriends.data.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
+import com.example.prettypetsandfriends.ui.theme.Purple40
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun UserEditProfileScreen(navController: NavController) {
+    val user by UserRepository().observeUserData().collectAsState(initial = null)
     val userRepository = remember { UserRepository() }
     val storageRepo = remember { StorageRepository() }
     val petRepository = remember { PetRepository() }
     val currentUser = petRepository.getCurrentUser()
+    val scope = rememberCoroutineScope()
+    var isPick = false
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var role by remember { mutableStateOf("user") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -43,11 +59,8 @@ fun UserEditProfileScreen(navController: NavController) {
             email = user.email ?: ""
             phone = user.phone ?: ""
             bio = user.bio ?: ""
-            selectedImageUri = if (!user.photoUrl.isNullOrEmpty()) {
-                Uri.parse(user.photoUrl)
-            } else {
-                null
-            }
+            role = user.role ?: "user"
+            selectedImageUri = user.photoUrl?.let { Uri.parse(it) }
         }
     }
 
@@ -60,68 +73,70 @@ fun UserEditProfileScreen(navController: NavController) {
                 onBackClick = { navController.popBackStack() }
             )
         },
-    ) { paddingValues ->
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(padding)
+                .padding(horizontal = 20.dp)
         ) {
             PhotoSection(
                 selectedImageUri = selectedImageUri,
                 onPickImage = {
                     imagePicker.launch("image/*")
+                    isPick = true
                 }
             )
-
-            Card(
+            ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.elevatedCardElevation(6.dp),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Имя") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = phone,
-                        onValueChange = { phone = it },
-                        label = { Text("Телефон") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = bio,
-                        onValueChange = { bio = it },
-                        label = { Text("О себе") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    listOf(
+                        Triple("Имя", name, Icons.Filled.Person),
+                        Triple("Email", email, Icons.Filled.Email),
+                        Triple("Телефон", phone, Icons.Filled.Phone),
+                        Triple("О себе", bio, Icons.Filled.Info)
+                    ).forEachIndexed { index, (label, value, icon) ->
+                        CustomOutlinedTextField(
+                            value = value,
+                            label = label,
+                            icon = icon,
+                            isMultiline = index == 3,
+                            onValueChange = {
+                                when(index) {
+                                    0 -> name = it
+                                    1 -> email = it
+                                    2 -> phone = it
+                                    3 -> bio = it
+                                }
+                            }
+                        )
+                    }
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(28.dp))
             Button(
                 onClick = {
                     if (currentUser == null) return@Button
-
-                    CoroutineScope(Dispatchers.Main).launch {
+                    scope.launch {
                         try {
-                            val photoUrl = selectedImageUri?.let { uri ->
+                            val photoUrl = if (isPick) {
                                 storageRepo.uploadUserImage(
                                     userId = currentUser.uid,
-                                    fileUri = uri
+                                    fileUri = selectedImageUri!!
                                 )
+                            } else {
+                                user?.photoUrl
                             }
 
                             userRepository.updateUserProfile(
@@ -133,15 +148,62 @@ fun UserEditProfileScreen(navController: NavController) {
                             )
                             navController.popBackStack()
                         } catch (e: Exception) {
-                            errorMessage = "Ошибка: ${e.message}"
+                            "Ошибка сохранения: ${e.localizedMessage}"
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
             ) {
-                Text("Сохранить изменения")
+                Text(text = "Сохранить изменения", fontSize = 16.sp)
             }
+
         }
     }
+}
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CustomOutlinedTextField(
+    value: String,
+    label: String,
+    icon: ImageVector,
+    isMultiline: Boolean = false,
+    onValueChange: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            cursorColor = MaterialTheme.colorScheme.primary
+        ),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+            lineHeight = 22.sp
+        ),
+        singleLine = !isMultiline,
+        maxLines = if (isMultiline) 3 else 1
+    )
 }

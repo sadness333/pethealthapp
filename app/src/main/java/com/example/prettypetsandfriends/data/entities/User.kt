@@ -8,5 +8,7 @@ data class User(
     val photoUrl: String = "",
     val bio: String = "",
     val pets: Map<String, Boolean> = emptyMap(),
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val role: String = "user"
+
 )

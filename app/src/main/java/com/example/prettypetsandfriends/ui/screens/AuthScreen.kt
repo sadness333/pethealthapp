@@ -271,23 +271,25 @@ private fun handleGoogleSignInResult(
         try {
             val account = task.getResult(ApiException::class.java)
             val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-
             val authResult = Firebase.auth.signInWithCredential(credential).await()
             val user = authResult.user
 
-            if (user != null) {
+            val userRef = Firebase.database.reference
+                .child("users")
+                .child(user!!.uid)
+
+            val snapshot = userRef.get().await()
+
+            if (!snapshot.exists()) {
                 val userData = hashMapOf(
                     "email" to user.email,
                     "name" to user.displayName,
                     "photoUrl" to user.photoUrl?.toString(),
-                    "createdAt" to ServerValue.TIMESTAMP
+                    "createdAt" to ServerValue.TIMESTAMP,
+                    "provider" to "google"
                 )
 
-                Firebase.database.reference
-                    .child("users")
-                    .child(user.uid)
-                    .setValue(userData)
-                    .await()
+                userRef.setValue(userData).await()
             }
 
             navController.navigate("main") {
