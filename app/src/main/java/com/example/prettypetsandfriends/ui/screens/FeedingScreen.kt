@@ -1,8 +1,9 @@
 package com.example.prettypetsandfriends.ui.screens
 
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -16,12 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.FeedingRecord
+import com.example.prettypetsandfriends.data.entities.FeedingTemplate
 import com.example.prettypetsandfriends.data.entities.FoodType
 import com.example.prettypetsandfriends.data.entities.NutritionData
 import com.example.prettypetsandfriends.data.repository.FeedingRepository
@@ -36,10 +37,11 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 
+
 @Composable
 fun FeedingScreen(navController: NavController) {
     var feedingRecords by remember { mutableStateOf<List<FeedingRecord>>(emptyList()) }
-    var showAddDialog by remember { mutableStateOf(false) }
+    var showTemplateDialog by remember { mutableStateOf(false) }
     var dailyGoal by remember { mutableStateOf(2000f) }
     var showPetDropdown by remember { mutableStateOf(false) }
     val petId = LocalPetState.current.selectedPet?.id ?: ""
@@ -47,7 +49,6 @@ fun FeedingScreen(navController: NavController) {
     LaunchedEffect(petId) {
         FeedingRepository.getFeedingRecords(petId) { records ->
             feedingRecords = records
-            Log.d("FEEDING", "$feedingRecords")
         }
 
         Firebase.database.getReference("pets/$petId/nutrition/dailyCalories")
@@ -74,7 +75,7 @@ fun FeedingScreen(navController: NavController) {
         bottomBar = { CustomBottomNavigation(navController) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddDialog = true },
+                onClick = { showTemplateDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
@@ -116,9 +117,9 @@ fun FeedingScreen(navController: NavController) {
         }
     }
 
-    if (showAddDialog) {
-        AddFeedingDialog(
-            onDismiss = { showAddDialog = false },
+    if (showTemplateDialog) {
+        AddFeedingTemplateDialog(
+            onDismiss = { showTemplateDialog = false },
             onConfirm = { newRecord ->
                 feedingRecords = feedingRecords + newRecord
             }
@@ -447,58 +448,66 @@ private fun FeedingRecordItem(
                 painter = painterResource(id = iconRes),
                 contentDescription = "Тип корма",
                 tint = typeColor,
-                modifier = Modifier.size(40.dp))
+                modifier = Modifier.size(40.dp)
+            )
 
-                Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = record.foodName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = record.foodName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                        Text(
-                            text = "${record.nutrition.calories.toInt()} ккал",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary)
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_time),
-                            contentDescription = "Время",
-                            modifier = Modifier.size(16.dp))
-
-                        Text(
-                            text = formatFeedingTime(record.feedingTime),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 4.dp))
-                    }
-
-                    if (record.comment.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "✎ ${record.comment}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis)
-                    }
+                    Text(
+                        text = "${record.nutrition.calories.toInt()} ккал",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
-                        IconButton(
-                        onClick = { showDeleteDialog = true },
-                modifier = Modifier.padding(start = 8.dp)) {
-            Icon(
-                painter = painterResource(R.drawable.ic_delete),
-                contentDescription = "Удалить",
-                tint = MaterialTheme.colorScheme.error)
-        }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_time),
+                        contentDescription = "Время",
+                        modifier = Modifier.size(16.dp)
+                    )
+
+                    Text(
+                        text = formatFeedingTime(record.feedingTime),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+
+                if (record.comment.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "✎ ${record.comment}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.padding(start = 8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = "Удалить",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
     if (showDeleteDialog) {
@@ -527,136 +536,140 @@ private fun FeedingRecordItem(
     }
 }
 
+// Новый диалог для выбора шаблона приёма питания
 @Composable
-private fun AddFeedingDialog(
+private fun AddFeedingTemplateDialog(
     onDismiss: () -> Unit,
     onConfirm: (FeedingRecord) -> Unit,
 ) {
     val petState = LocalPetState.current
-    var foodName by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(FoodType.DRY) }
-    var calories by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("") }
-    var comment by remember { mutableStateOf("") }
+    val petId = petState.selectedPet?.id ?: ""
+    val templates = listOf(
+        FeedingTemplate(
+            foodName = "Сухой корм",
+            type = FoodType.DRY,
+            quantity = 100f,
+            calories = 350f,
+            comment = "Стандартный сухой корм"
+        ),
+        FeedingTemplate(
+            foodName = "Влажный корм",
+            type = FoodType.WET,
+            quantity = 150f,
+            calories = 280f,
+            comment = "Для разнообразия"
+        ),
+        FeedingTemplate(
+            foodName = "Домашняя еда",
+            type = FoodType.HOMEMADE,
+            quantity = 200f,
+            calories = 300f,
+            comment = "Рецепт от ветеринара"
+        )
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Добавить прием питания") },
+        title = { Text("Выберите шаблон питания") },
         text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState())
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(
-                    value = foodName,
-                    onValueChange = { foodName = it },
-                    label = { Text("Название корма") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(FoodType.entries) { type ->
-                        FilterChip(
-                            selected = selectedType == type,
-                            onClick = { selectedType = type },
-                            label = {
-                                Text(
-                                    text = type.displayName,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
-                                    modifier = Modifier.padding(start = 4.dp)
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    painter = painterResource(type.iconRes),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            },
-                            modifier = Modifier
-                                .defaultMinSize(
-                                    minWidth = 64.dp,
-                                    minHeight = 40.dp
-                                )
-                                .padding(vertical = 4.dp),
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
+                items(templates) { template ->
+                    TemplateCard(template = template) {
+                        val formatter = DateTimeFormatter.ISO_DATE_TIME
+                        val newRecord = FeedingRecord(
+                            foodName = template.foodName,
+                            type = template.type,
+                            nutrition = NutritionData(
+                                calories = template.calories,
+                                protein = calculateProtein(template.type, template.quantity),
+                                fat = calculateFat(template.type, template.quantity),
+                                carbs = calculateCarbs(template.type, template.quantity)
+                            ),
+                            quantity = template.quantity,
+                            feedingTime = LocalDateTime.now().format(formatter),
+                            comment = template.comment,
+                            petId = petId
                         )
+                        FeedingRepository.addFeedingRecord(
+                            petId = petId,
+                            record = newRecord
+                        )
+                        onConfirm(newRecord)
+                        onDismiss()
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = calories,
-                        onValueChange = { calories = it },
-                        label = { Text("Калории") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    OutlinedTextField(
-                        value = quantity,
-                        onValueChange = { quantity = it },
-                        label = { Text("Кол-во (г)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = comment,
-                    onValueChange = { comment = it },
-                    label = { Text("Комментарий") },
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         },
-        confirmButton = {
-            Button(
-                enabled = foodName.isNotBlank() && calories.isNotBlank() && quantity.isNotBlank(),
-                onClick = {
-                    val formatter = DateTimeFormatter.ISO_DATE_TIME
-                    val newRecord = FeedingRecord(
-                        foodName = foodName.trim(),
-                        type = selectedType,
-                        nutrition = NutritionData(
-                            calories = calories.toFloat(),
-                            protein = calculateProtein(selectedType, quantity.toFloat()),
-                            fat = calculateFat(selectedType, quantity.toFloat()),
-                            carbs = calculateCarbs(selectedType, quantity.toFloat())
-                        ),
-                        quantity = quantity.toFloat(),
-                        feedingTime = LocalDateTime.now().format(formatter),
-                        comment = comment.trim(),
-                        petId = petState.selectedPet?.id ?: ""
-                    )
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Отмена")
+            }
+        },
+        confirmButton = {} // Подтверждение происходит при выборе шаблона
+    )
+}
 
-                    FeedingRepository.addFeedingRecord(
-                        petId = petState.selectedPet?.id ?: "",
-                        record = newRecord
+@Composable
+private fun TemplateCard(
+    template: FeedingTemplate,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val iconRes = when (template.type) {
+                FoodType.DRY -> R.drawable.ic_dry
+                FoodType.WET -> R.drawable.ic_water
+                FoodType.HOMEMADE -> R.drawable.ic_eating
+            }
+            val typeColor = when (template.type) {
+                FoodType.DRY -> MaterialTheme.colorScheme.primary
+                FoodType.WET -> MaterialTheme.colorScheme.secondary
+                FoodType.HOMEMADE -> MaterialTheme.colorScheme.tertiary
+            }
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                tint = typeColor,
+                modifier = Modifier.size(40.dp)
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = template.foodName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "${template.quantity.toInt()} г • ${template.calories.toInt()} ккал",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (template.comment.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = template.comment,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    onDismiss()
                 }
-            ) {
-                Text("Сохранить")
             }
         }
-    )
+    }
 }
 
 fun formatFeedingTime(feedingTime: String): String {
@@ -670,19 +683,19 @@ fun formatFeedingTime(feedingTime: String): String {
 }
 
 private fun calculateProtein(type: FoodType, quantity: Float) = when(type) {
-            FoodType.DRY -> quantity * 0.25f
-            FoodType.WET -> quantity * 0.20f
-            FoodType.HOMEMADE -> quantity * 0.18f
-        }
+    FoodType.DRY -> quantity * 0.25f
+    FoodType.WET -> quantity * 0.20f
+    FoodType.HOMEMADE -> quantity * 0.18f
+}
 
 private fun calculateFat(type: FoodType, quantity: Float) = when(type) {
-            FoodType.DRY -> quantity * 0.12f
-            FoodType.WET -> quantity * 0.10f
-            FoodType.HOMEMADE -> quantity * 0.08f
-        }
+    FoodType.DRY -> quantity * 0.12f
+    FoodType.WET -> quantity * 0.10f
+    FoodType.HOMEMADE -> quantity * 0.08f
+}
 
 private fun calculateCarbs(type: FoodType, quantity: Float) = when(type) {
-            FoodType.DRY -> quantity * 0.40f
-            FoodType.WET -> quantity * 0.35f
-            FoodType.HOMEMADE -> quantity * 0.15f
-        }
+    FoodType.DRY -> quantity * 0.40f
+    FoodType.WET -> quantity * 0.35f
+    FoodType.HOMEMADE -> quantity * 0.15f
+}
