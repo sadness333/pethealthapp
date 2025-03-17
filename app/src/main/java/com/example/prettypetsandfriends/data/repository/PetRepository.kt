@@ -21,17 +21,6 @@ class PetRepository {
 
     fun getCurrentUser() = auth.currentUser
 
-    suspend fun loadUserData(uid: String): User = suspendCoroutine { continuation ->
-        database.child("users").child(uid).get()
-            .addOnSuccessListener { snapshot ->
-                val user = snapshot.getValue(User::class.java) ?: User()
-                continuation.resume(user)
-            }
-            .addOnFailureListener { e ->
-                continuation.resumeWithException(e)
-            }
-    }
-
     suspend fun addPet(pet: Pet): String = suspendCoroutine { continuation ->
         val newPetRef = database.child("pets").push()
         val petId = newPetRef.key ?: ""
