@@ -2,6 +2,7 @@ package com.example.prettypetsandfriends.ui.screens
 
 import androidx.compose.material3.TimePicker
 import android.widget.TimePicker
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -74,6 +75,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -101,6 +103,7 @@ import java.util.UUID
 
 @Composable
 fun CalendarScreen(navController: NavController) {
+    val context = LocalContext.current
     val petId = LocalPetState.current.selectedPet?.id ?: ""
     var events by remember { mutableStateOf(emptyList<CalendarEvent>()) }
     var showAddEventDialog by remember { mutableStateOf(false) }
@@ -124,7 +127,11 @@ fun CalendarScreen(navController: NavController) {
         bottomBar = { CustomBottomNavigation(navController) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddEventDialog = true },
+                onClick = { if (petId.isEmpty()) {
+                        Toast.makeText(context, "Невозможно поменять дневную норму у несуществующего питомца", Toast.LENGTH_LONG).show()
+                    } else {
+                    showAddEventDialog = true
+                    }},
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить событие")

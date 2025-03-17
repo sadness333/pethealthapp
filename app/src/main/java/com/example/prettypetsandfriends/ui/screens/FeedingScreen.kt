@@ -1,6 +1,8 @@
 package com.example.prettypetsandfriends.ui.screens
 
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -18,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.backend.PetState
 import com.example.prettypetsandfriends.data.entities.FeedingRecord
 import com.example.prettypetsandfriends.data.entities.FeedingTemplate
 import com.example.prettypetsandfriends.data.entities.FoodType
@@ -44,12 +48,14 @@ import kotlin.math.abs
 
 @Composable
 fun FeedingScreen(navController: NavController) {
+    val context = LocalContext.current
     var feedingRecords by remember { mutableStateOf<List<FeedingRecord>>(emptyList()) }
     var showTemplateDialog by remember { mutableStateOf(false) }
     var showTemplateConstructorDialog by remember { mutableStateOf(false) }
     var dailyGoal by remember { mutableStateOf(2000f) }
     var showPetDropdown by remember { mutableStateOf(false) }
-    val petId = LocalPetState.current.selectedPet?.id ?: ""
+    val petState = LocalPetState.current
+    val petId = petState.selectedPet?.id ?: ""
 
     var feedingTemplates by remember { mutableStateOf(emptyList<FeedingTemplate>()) }
 
@@ -97,7 +103,12 @@ fun FeedingScreen(navController: NavController) {
         bottomBar = { CustomBottomNavigation(navController) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showTemplateDialog = true },
+                onClick = {
+                    if (petState.allPets.isEmpty()) {
+                        Toast.makeText(context, "Отсутствуют животные для добавления шаблонов питания", Toast.LENGTH_LONG).show()
+                    } else{
+                        showTemplateDialog = true
+                    }},
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Добавить прием еды")
@@ -117,7 +128,9 @@ fun FeedingScreen(navController: NavController) {
                     Firebase.database.getReference("pets/$petId/nutrition/dailyCalories").setValue(newGoal)
                     dailyGoal = newGoal
                 },
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp),
+                petState = petState,
+                context = context
             )
 
             VetRecommendationsCard(
@@ -167,7 +180,9 @@ private fun CalorieProgressCard(
     current: Float,
     goal: Float,
     onGoalChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    petState: PetState,
+    context: Context
 ) {
     val progress = (current / goal).coerceAtLeast(0f)
     val isOverLimit = current > goal
@@ -202,7 +217,11 @@ private fun CalorieProgressCard(
             }
             Card(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
-                onClick = { showGoalDialog = true },
+                onClick = { if (petState.allPets.isEmpty()) {
+                    Toast.makeText(context, "Невозможно поменять дневную норму у несуществующего питомца", Toast.LENGTH_LONG).show()
+                } else {
+                    showGoalDialog = true
+                }},
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(

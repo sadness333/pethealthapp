@@ -124,12 +124,27 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
                 }
             }
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                items(petState.allPets) { pet ->
-                    ModernPetCard(pet = pet, navController = navController)
+            if (petState.allPets.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "У вас пока нет питомцев. Добавьте первого!",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            } else {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    items(petState.allPets) { pet ->
+                        ModernPetCard(pet = pet, navController = navController)
+                    }
                 }
             }
         }

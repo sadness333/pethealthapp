@@ -15,6 +15,7 @@ class HealthRecordsRepository {
     fun getHealthRecordsFlow(petId: String?): Flow<List<HealthRecord>> = callbackFlow {
         if (petId.isNullOrEmpty()) {
             trySend(emptyList())
+            awaitClose { }
             return@callbackFlow
         }
 

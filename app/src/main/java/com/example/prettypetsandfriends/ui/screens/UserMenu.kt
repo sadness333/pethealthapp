@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
+import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.User
 import com.example.prettypetsandfriends.data.entities.UserProfile
 import com.example.prettypetsandfriends.data.repository.UserRepository
@@ -64,6 +65,7 @@ fun UserMenuScreen(navController: NavController) {
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
     val coroutineScope = rememberCoroutineScope()
+    val petState = LocalPetState.current
     val user by UserRepository().observeUserData().collectAsState(initial = null)
 
     LaunchedEffect(Unit) {
@@ -139,6 +141,7 @@ fun UserMenuScreen(navController: NavController) {
                     title = "Выйти из аккаунта",
                     icon = Icons.Default.ExitToApp,
                     onClick = {
+                        petState.selectedPet = null
                         Firebase.auth.signOut()
                         googleSignInClient.signOut().addOnCompleteListener {
                             navController.navigate("auth") {
