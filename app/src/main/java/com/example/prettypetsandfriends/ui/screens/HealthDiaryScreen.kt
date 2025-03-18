@@ -52,7 +52,7 @@ fun HealthDiaryScreen(navController: NavController) {
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(records) { record ->
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
 
                             HealthRecordCard(record = record)
                         }
