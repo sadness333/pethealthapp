@@ -1,13 +1,12 @@
 package com.example.prettypetsandfriends.ui.screens
 
-import androidx.compose.material3.TimePicker
-import android.widget.TimePicker
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,11 +16,12 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -45,12 +45,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
-import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -59,6 +55,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -74,13 +71,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
@@ -108,7 +106,6 @@ fun CalendarScreen(navController: NavController) {
     var events by remember { mutableStateOf(emptyList<CalendarEvent>()) }
     var showAddEventDialog by remember { mutableStateOf(false) }
     var eventToEdit by remember { mutableStateOf<CalendarEvent?>(null) }
-    var showPetDropdown by remember { mutableStateOf(false) }
 
     LaunchedEffect(petId) {
         CalendarRepository.getEvents(petId) { events = it }
@@ -116,43 +113,91 @@ fun CalendarScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            CustomTopBar(
-                navController = navController,
-                showPetDropdown = showPetDropdown,
-                onPetClick = { showPetDropdown = true },
-                onDismiss = { showPetDropdown = false },
-                name = "Календарь",
-            )
+            CustomTopBar(navController = navController, name = "Календарь")
         },
-        bottomBar = { CustomBottomNavigation(navController) },
+        bottomBar = { CustomBottomNavigation(navController = navController) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { if (petId.isEmpty()) {
-                        Toast.makeText(context, "Невозможно поменять дневную норму у несуществующего питомца", Toast.LENGTH_LONG).show()
+                onClick = {
+                    if (petId.isEmpty()) {
+                        Toast.makeText(
+                            context,
+                            "Невозможно добавить событие для несуществующего питомца",
+                            Toast.LENGTH_LONG
+                        ).show()
                     } else {
-                    showAddEventDialog = true
-                    }},
+                        showAddEventDialog = true
+                    }
+                },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить событие")
             }
-        },
+        }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
-                .padding(paddingValues)
                 .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            MiniCalendar(events = events)
-            CalendarEventList(
-                events = events,
-                onEditEvent = { event -> eventToEdit = event },
-                onDeleteEvent = { eventId ->
-                    CalendarRepository.deleteEvent(petId, eventId)
-                    events = events.filter { it.id != eventId }
-                },
-                petId = petId
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 500.dp, max = 1000.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                ) {
+                    MiniCalendar(
+                        events = events,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                DoctorAppointmentCard(
+                    events = events,
+                    petId = petId,
+                    modifier = Modifier.fillMaxWidth()
+                ) { updatedEvent, isBooking ->
+                    if (isBooking) {
+                        CalendarRepository.addEvent(petId, updatedEvent)
+                        events = events + updatedEvent
+                    } else {
+                        CalendarRepository.deleteEvent(petId, updatedEvent.id)
+                        events = events.filter { it.id != updatedEvent.id }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "События",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                events.filter { !it.title.startsWith("Запись к врачу:") }.forEach { event ->
+                    EventCard(
+                        event = event,
+                        onEdit = { eventToEdit = it },
+                        onDelete = { eventId ->
+                            CalendarRepository.deleteEvent(petId, eventId)
+                            events = events.filter { it.id != eventId }
+                        },
+                        petId = petId,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
         }
     }
 
@@ -181,20 +226,32 @@ fun CalendarScreen(navController: NavController) {
 }
 
 @Composable
-fun MiniCalendar(events: List<CalendarEvent>) {
+fun MiniCalendar(events: List<CalendarEvent>, modifier: Modifier = Modifier) {
     var displayedMonth by remember { mutableStateOf(LocalDate.now().withDayOfMonth(1)) }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        elevation = CardDefaults.cardElevation(8.dp),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            CalendarHeader(displayedMonth) { displayedMonth = it }
-            CalendarGrid(displayedMonth, events)
-        }
+    Card{
+    Column(modifier = modifier.pointerInput(Unit) {
+        var cumulativeDrag = 0f
+        detectHorizontalDragGestures(
+            onHorizontalDrag = { _, dragAmount ->
+                cumulativeDrag += dragAmount
+            },
+            onDragEnd = {
+                if (cumulativeDrag < -100f) {
+                    displayedMonth = displayedMonth.plusMonths(1)
+                } else if (cumulativeDrag > 100f) {
+                    displayedMonth = displayedMonth.minusMonths(1)
+                }
+                cumulativeDrag = 0f
+            }
+        )
+    })
+
+    {
+        CalendarHeader(displayedMonth) { displayedMonth = it }
+        Spacer(modifier = Modifier.height(16.dp))
+        CalendarGrid(displayedMonth, events)
+    }
     }
 }
 
@@ -205,8 +262,8 @@ private fun CalendarHeader(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
             onClick = { onMonthChanged(displayedMonth.minusMonths(1)) },
@@ -214,14 +271,12 @@ private fun CalendarHeader(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
-            Icon(Icons.Default.KeyboardArrowLeft, "Предыдущий месяц")
+            Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Предыдущий месяц")
         }
 
         Text(
-            text = displayedMonth.format(
-                DateTimeFormatter.ofPattern("MMMM yyyy", Locale("ru"))
-            ),
-            style = MaterialTheme.typography.titleLarge,
+            text = displayedMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("ru"))),
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
             color = MaterialTheme.colorScheme.primary
         )
 
@@ -231,7 +286,7 @@ private fun CalendarHeader(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
-            Icon(Icons.Default.KeyboardArrowRight, "Следующий месяц")
+            Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Следующий месяц")
         }
     }
 }
@@ -241,7 +296,7 @@ private fun CalendarGrid(
     displayedMonth: LocalDate,
     events: List<CalendarEvent>
 ) {
-    val firstDayOfMonth = displayedMonth
+    val firstDayOfMonth = displayedMonth.withDayOfMonth(1)
     val firstVisibleDay = firstDayOfMonth.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val days = List(42) { firstVisibleDay.plusDays(it.toLong()) }
 
@@ -263,15 +318,15 @@ private fun CalendarDayCell(
     currentMonth: java.time.Month,
     events: List<CalendarEvent>
 ) {
-    val isCurrentMonth = day.month == currentMonth
-    val dayEvents = events.filter { it.date == day }
+    val isCurrentMonth = (day.month == currentMonth)
+    val dayEvents = events.filter { it.date == day && !it.title.startsWith("Запись к врачу") }
 
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
             .background(
-                color = if (isCurrentMonth) MaterialTheme.colorScheme.surfaceVariant
+                if (isCurrentMonth) MaterialTheme.colorScheme.surfaceVariant
                 else MaterialTheme.colorScheme.surface
             )
             .clickable(enabled = isCurrentMonth) {},
@@ -284,7 +339,6 @@ private fun CalendarDayCell(
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 style = MaterialTheme.typography.bodyMedium
             )
-
             if (dayEvents.isNotEmpty()) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -307,7 +361,246 @@ private fun CalendarDayCell(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DoctorAppointmentCard(
+    events: List<CalendarEvent>,
+    petId: String,
+    modifier: Modifier = Modifier,
+    onAppointmentAction: (CalendarEvent, Boolean) -> Unit
+) {
+    var showAppointmentDialog by remember { mutableStateOf(false) }
+
+    val doctorAppointments = events.filter { it.title.startsWith("Запись к врачу:") }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(8.dp),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Записи к врачу", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (doctorAppointments.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 300.dp)
+                ) {                     items(doctorAppointments) { appointment ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = appointment.title + " " +
+                                        appointment.date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale("ru"))) + " " +
+                                        (appointment.time?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: ""),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Button(onClick = { onAppointmentAction(appointment, false) }) {
+                                Text("Отменить")
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                }
+            } else {
+                Text("Нет записей", color = Color.Gray)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { showAppointmentDialog = true },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Новая запись")
+            }
+        }
+    }
+
+    if (showAppointmentDialog) {
+        DoctorAppointmentDialog(
+            events = events,
+            petId = petId,
+            onDismiss = { showAppointmentDialog = false },
+            onConfirm = { newAppointment ->
+                onAppointmentAction(newAppointment, true)
+                showAppointmentDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun DoctorAppointmentDialog(
+    events: List<CalendarEvent>,
+    petId: String,
+    onDismiss: () -> Unit,
+    onConfirm: (CalendarEvent) -> Unit
+) {
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
+    // Фиксированный список врачей (для примера)
+    val doctors = listOf("Dr. Иванов", "Dr. Петров", "Dr. Сидоров")
+    var selectedDoctor by remember { mutableStateOf(doctors.first()) }
+    // Фиксированный список целей записи
+    val purposes = listOf("Вакцинация", "Осмотр", "Консультация")
+    var selectedPurpose by remember { mutableStateOf(purposes.first()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    // Пример расписания для каждого врача
+    val doctorSchedules = mapOf(
+        "Dr. Иванов" to listOf(LocalTime.of(9, 0), LocalTime.of(9, 30), LocalTime.of(10, 0), LocalTime.of(10, 30), LocalTime.of(11, 0)),
+        "Dr. Петров" to listOf(LocalTime.of(10, 0), LocalTime.of(10, 30), LocalTime.of(11, 0), LocalTime.of(11, 30)),
+        "Dr. Сидоров" to listOf(LocalTime.of(8, 30), LocalTime.of(9, 0), LocalTime.of(9, 30), LocalTime.of(10, 0))
+    )
+    val availableTimes = doctorSchedules[selectedDoctor] ?: emptyList()
+
+    val appointmentTitle = "Запись к врачу: $selectedDoctor - $selectedPurpose"
+    val existingAppointment = events.find {
+        it.title == appointmentTitle && it.date == selectedDate && it.time == selectedTime
+    }
+    val isAvailable = (selectedTime != null && existingAppointment == null)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Новая запись к врачу") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                // Выбор даты
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Дата: " + selectedDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale("ru"))),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Button(onClick = { showDatePicker = true }) { Text("Выбрать дату") }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Выбор врача
+                Text("Выберите врача:")
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    doctors.forEach { doctor ->
+                        FilterChip(
+                            selected = (selectedDoctor == doctor),
+                            onClick = { selectedDoctor = doctor },
+                            label = { Text(doctor) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Выбор цели записи
+                Text("Цель записи:")
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    purposes.forEach { purpose ->
+                        FilterChip(
+                            selected = (selectedPurpose == purpose),
+                            onClick = { selectedPurpose = purpose },
+                            label = { Text(purpose) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Выбор времени приёма (из доступных слотов)
+                Text("Выберите время:")
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    availableTimes.forEach { timeSlot ->
+                        FilterChip(
+                            selected = (selectedTime == timeSlot),
+                            onClick = { selectedTime = timeSlot },
+                            label = { Text(timeSlot.format(DateTimeFormatter.ofPattern("HH:mm"))) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Статус доступности
+                if (selectedTime == null) {
+                    Text("Пожалуйста, выберите время", color = Color.Red)
+                } else {
+                    if (existingAppointment != null) {
+                        Text("Слот недоступен для $selectedDoctor", color = Color.Red)
+                    } else {
+                        Text("Слот доступен", color = Color.Green)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (selectedTime != null && existingAppointment == null) {
+                        val newAppointment = CalendarEvent(
+                            title = appointmentTitle,
+                            type = EventType.SINGLE,
+                            date = selectedDate,
+                            time = selectedTime,
+                            repeatMode = null,
+                            daysOfWeek = emptyList(),
+                            notificationEnabled = false,
+                            petId = petId
+                        )
+                        onConfirm(newAppointment)
+                    }
+                },
+                enabled = selectedTime != null && existingAppointment == null
+            ) {
+                Text("Сохранить")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Отмена") }
+        }
+    )
+
+    if (showDatePicker) {
+        AppointmentDatePicker(
+            initialDate = selectedDate,
+            onDateSelected = {
+                selectedDate = it
+                showDatePicker = false
+            },
+            onDismiss = { showDatePicker = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppointmentDatePicker(
+    initialDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val dateState = rememberDatePickerState(
+        initialSelectedDateMillis = initialDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Выберите дату записи") },
+        text = {
+            DatePicker(
+                state = dateState,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedDayContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(360.dp)
+            )
+        },
+        confirmButton = {
+            Button(onClick = {
+                val selectedMillis = dateState.selectedDateMillis ?: System.currentTimeMillis()
+                val date = Instant.ofEpochMilli(selectedMillis).atZone(ZoneId.systemDefault()).toLocalDate()
+                onDateSelected(date)
+            }) { Text("Сохранить") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Отмена") }
+        }
+    )
+}
+
 @Composable
 fun CalendarEventList(
     events: List<CalendarEvent>,
@@ -315,16 +608,14 @@ fun CalendarEventList(
     onDeleteEvent: (UUID) -> Unit,
     petId: String
 ) {
-    LazyColumn(
-        modifier = Modifier.padding(horizontal = 16.dp)
-    ) {
+    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
         items(events, key = { it.id }) { event ->
             EventCard(
                 event = event,
                 onEdit = { onEditEvent(it) },
                 onDelete = { onDeleteEvent(it) },
                 petId = petId,
-                modifier = Modifier.animateItemPlacement()
+                modifier = Modifier.animateContentSize()
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -348,9 +639,7 @@ fun EventCard(
             .animateContentSize(),
         elevation = CardDefaults.cardElevation(4.dp),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             EventHeader(event, expanded) { expanded = !expanded }
@@ -367,30 +656,23 @@ private fun EventHeader(event: CalendarEvent, expanded: Boolean, onExpand: () ->
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             painter = painterResource(
-                if (event.type == EventType.REPEATING) R.drawable.ic_repeat
-                else R.drawable.ic_event
+                if (event.type == EventType.REPEATING) R.drawable.ic_repeat else R.drawable.ic_event
             ),
             contentDescription = null,
             tint = event.color,
-            modifier = Modifier.size(24.dp))
-
-                    Spacer(Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = event.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                EventScheduleText(event)
-            }
-
-                    IconButton(onClick = onExpand) {
-                Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = "Подробности"
-                )
-            }
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(event.title, style = MaterialTheme.typography.titleMedium)
+            EventScheduleText(event)
+        }
+        IconButton(onClick = onExpand) {
+            Icon(
+                imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = "Подробнее"
+            )
+        }
     }
 }
 
@@ -398,7 +680,6 @@ private fun EventHeader(event: CalendarEvent, expanded: Boolean, onExpand: () ->
 private fun EventScheduleText(event: CalendarEvent) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val dateFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru"))
-
     Text(
         text = buildString {
             append(event.date.format(dateFormatter))
@@ -434,15 +715,8 @@ private fun NotificationToggle(
     onEdit: (CalendarEvent) -> Unit,
     petId: String
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Icon(
-            Icons.Default.Notifications,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
-        )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
         Text("Уведомления", modifier = Modifier.weight(1f))
         Switch(
@@ -465,11 +739,10 @@ private fun RepeatBadges(event: CalendarEvent) {
                 onClick = {},
                 label = { Text(it.displayName) },
                 leadingIcon = {
-                    Icon(painterResource(R.drawable.ic_repeat), null)
+                    Icon(painterResource(R.drawable.ic_repeat), contentDescription = null)
                 }
             )
         }
-
         if (event.daysOfWeek.isNotEmpty()) {
             FilterChip(
                 selected = true,
@@ -491,20 +764,14 @@ private fun EventActions(
     onEdit: (CalendarEvent) -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
         IconButton(onClick = { onEdit(event) }) {
-            Icon(Icons.Default.Edit, "Редактировать")
+            Icon(Icons.Default.Edit, contentDescription = "Редактировать")
         }
-
         IconButton(onClick = { showDeleteDialog = true }) {
-            Icon(Icons.Default.Delete, "Удалить")
+            Icon(Icons.Default.Delete, contentDescription = "Удалить")
         }
     }
-
     if (showDeleteDialog) {
         DeleteEventDialog(
             onConfirm = { onDelete(event.id) },
@@ -532,6 +799,7 @@ private fun DeleteEventDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     )
 }
 
+/** ******************* Диалоги добавления/редактирования ******************* */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEventDialog(
@@ -557,7 +825,6 @@ fun AddEventDialog(
 
                 if (selectedType == EventType.REPEATING) {
                     RepeatModeSelector(repeatMode) { repeatMode = it }
-
                     if (repeatMode == RepeatMode.WEEKLY) {
                         DayOfWeekSelector(daysOfWeek) { daysOfWeek = it }
                     }
@@ -585,10 +852,7 @@ fun AddEventDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Время: ${selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "Не указано"}")
                     Spacer(modifier = Modifier.weight(1f))
                     Button(onClick = { showTimePicker = true }) {
@@ -598,10 +862,7 @@ fun AddEventDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Notifications, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Уведомления", modifier = Modifier.weight(1f))
@@ -618,6 +879,7 @@ fun AddEventDialog(
                     val date = Instant.ofEpochMilli(dateState.selectedDateMillis ?: System.currentTimeMillis())
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate()
+
                     val newEvent = CalendarEvent(
                         title = title,
                         type = selectedType,
@@ -678,10 +940,8 @@ fun EditEventDialog(
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 EventTypeSelector(selectedType) { selectedType = it }
-
                 if (selectedType == EventType.REPEATING) {
                     RepeatModeSelector(repeatMode) { repeatMode = it }
-
                     if (repeatMode == RepeatMode.WEEKLY) {
                         DayOfWeekSelector(daysOfWeek) { daysOfWeek = it }
                     }
@@ -709,10 +969,7 @@ fun EditEventDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Время: ${selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "Не указано"}")
                     Spacer(modifier = Modifier.weight(1f))
                     Button(onClick = { showTimePicker = true }) {
@@ -722,10 +979,7 @@ fun EditEventDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Notifications, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Уведомления", modifier = Modifier.weight(1f))
@@ -742,6 +996,7 @@ fun EditEventDialog(
                     val date = Instant.ofEpochMilli(dateState.selectedDateMillis!!)
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate()
+
                     val updatedEvent = event.copy(
                         title = title,
                         type = selectedType,
@@ -781,10 +1036,10 @@ private fun EventTypeSelector(
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text("Тип события", style = MaterialTheme.typography.labelMedium)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(EventType.values()) { type ->
                 FilterChip(
-                    selected = type == selectedType,
+                    selected = (type == selectedType),
                     onClick = { onTypeSelected(type) },
                     label = { Text(type.displayName) }
                 )
@@ -800,10 +1055,10 @@ private fun RepeatModeSelector(
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text("Повторение", style = MaterialTheme.typography.labelMedium)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(RepeatMode.values()) { mode ->
                 FilterChip(
-                    selected = mode == selectedMode,
+                    selected = (mode == selectedMode),
                     onClick = { onModeSelected(mode) },
                     label = { Text(mode.displayName) }
                 )
@@ -819,17 +1074,19 @@ private fun DayOfWeekSelector(
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text("Дни недели", style = MaterialTheme.typography.labelMedium)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(DayOfWeek.values()) { day ->
                 FilterChip(
-                    selected = selectedDays.contains(day),
+                    selected = (day in selectedDays),
                     onClick = {
                         onDaysSelected(
-                            if (selectedDays.contains(day)) selectedDays - day
+                            if (day in selectedDays) selectedDays - day
                             else selectedDays + day
                         )
                     },
-                    label = { Text(day.getDisplayName(TextStyle.SHORT, Locale("ru"))) }
+                    label = {
+                        Text(day.getDisplayName(TextStyle.SHORT, Locale("ru")))
+                    }
                 )
             }
         }
@@ -842,8 +1099,6 @@ private fun TimePickerDialog(
     onTimeSelected: (LocalTime) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedHour by remember { mutableStateOf(12) }
-    var selectedMinute by remember { mutableStateOf(0) }
     val timePickerState = rememberTimePickerState(
         initialHour = 12,
         initialMinute = 0,
@@ -854,7 +1109,7 @@ private fun TimePickerDialog(
         onDismissRequest = onDismiss,
         title = { Text("Выберите время") },
         text = {
-            TimePicker(
+            androidx.compose.material3.TimePicker(
                 state = timePickerState,
                 modifier = Modifier.padding(16.dp)
             )
