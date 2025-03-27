@@ -18,6 +18,7 @@ import com.example.prettypetsandfriends.ui.screens.AddPetScreen
 import com.example.prettypetsandfriends.ui.screens.AiChatScreen
 import com.example.prettypetsandfriends.ui.screens.AuthScreen
 import com.example.prettypetsandfriends.ui.screens.CalendarScreen
+import com.example.prettypetsandfriends.ui.screens.DeleteAccountScreen
 import com.example.prettypetsandfriends.ui.screens.DocumentsScreen
 import com.example.prettypetsandfriends.ui.screens.FeedingScreen
 import com.example.prettypetsandfriends.ui.screens.HealthDiaryScreen
@@ -55,6 +56,7 @@ fun NavigationPetApp() {
         composable("document") { DocumentsScreen(navController) }
         composable("stats") { StatisticsScreen(navController) }
         composable("weight") { WeightTrackerScreen(navController)}
+        composable("delete_profile") { DeleteAccountScreen(navController)}
         composable(
             route = "pet_profile/{petId}",
             arguments = listOf(navArgument("petId") { type = NavType.StringType })

@@ -93,7 +93,7 @@ fun UserEditProfileScreen(navController: NavController) {
                 shape = RoundedCornerShape(24.dp),
                 elevation = CardDefaults.elevatedCardElevation(6.dp),
                 colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
                 Column(
@@ -196,7 +196,7 @@ private fun CustomOutlinedTextField(
         shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.outlinedTextFieldColors(
             focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
             cursorColor = MaterialTheme.colorScheme.primary
         ),
         textStyle = MaterialTheme.typography.bodyLarge.copy(

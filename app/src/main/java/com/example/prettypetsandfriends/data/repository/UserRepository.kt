@@ -45,6 +45,10 @@ class UserRepository {
         database.child("users/$uid").updateChildren(updates).await()
     }
 
+    suspend fun deleteUserData(uid: String) {
+        database.child("users/$uid").removeValue().await()
+    }
+
     fun observeUserData(): Flow<User> = callbackFlow {
         val uid = auth.currentUser?.uid ?: run {
             close()

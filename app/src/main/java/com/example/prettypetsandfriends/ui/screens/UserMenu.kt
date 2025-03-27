@@ -133,7 +133,7 @@ fun UserMenuScreen(navController: NavController) {
                 MenuCard(
                     title = "Удалить аккаунт",
                     icon = Icons.Default.Delete,
-                    onClick = { /* Логика удаления */ },
+                    onClick = { navController.navigate("delete_profile") },
                     isDestructive = true
                 )
 

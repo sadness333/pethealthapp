@@ -11,6 +11,7 @@ import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -20,6 +21,17 @@ class PetRepository {
     private val database = Firebase.database.reference
 
     fun getCurrentUser() = auth.currentUser
+
+    suspend fun deleteAllPets(uid: String) {
+        database.child("pets")
+            .orderByChild("ownerId")
+            .equalTo(uid)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                snapshot.children.forEach { it.ref.removeValue() }
+            }
+            .await()
+    }
 
     suspend fun addPet(pet: Pet): String = suspendCoroutine { continuation ->
         val newPetRef = database.child("pets").push()
