@@ -6,6 +6,8 @@ data class HealthRecord(
     val id: String = "",
     val date: String = "",
     val description: String = "",
+    @PropertyName("expirationDate")
+    val expirationDate: String = "",
     @PropertyName("petId")
     val petId: String = "",
     val title: String = "",
