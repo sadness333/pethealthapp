@@ -45,14 +45,6 @@ fun HealthDiaryScreen(navController: NavController) {
             LocalDateTime.parse(it.date, DateTimeFormatter.ISO_DATE_TIME)
         }
     }
-    val currentUser = petState.petRepository.getCurrentUser()
-
-    LaunchedEffect(Unit) {
-        if (currentUser != null) {
-            petState.loadPets(currentUser.uid)
-        }
-    }
-
 
     Scaffold(
         topBar = {
