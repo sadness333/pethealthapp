@@ -20,13 +20,13 @@ import com.example.prettypetsandfriends.ui.screens.AuthScreen
 import com.example.prettypetsandfriends.ui.screens.CalendarScreen
 import com.example.prettypetsandfriends.ui.screens.DeleteAccountScreen
 import com.example.prettypetsandfriends.ui.screens.DocumentsScreen
+import com.example.prettypetsandfriends.ui.screens.FAQScreen
 import com.example.prettypetsandfriends.ui.screens.FeedingScreen
 import com.example.prettypetsandfriends.ui.screens.HealthDiaryScreen
 import com.example.prettypetsandfriends.ui.screens.MainScreen
 import com.example.prettypetsandfriends.ui.screens.PetProfileScreen
 import com.example.prettypetsandfriends.ui.screens.RegistrationScreen
 import com.example.prettypetsandfriends.ui.screens.SplashScreen
-import com.example.prettypetsandfriends.ui.screens.StatisticsScreen
 import com.example.prettypetsandfriends.ui.screens.UserEditProfileScreen
 import com.example.prettypetsandfriends.ui.screens.UserMenuScreen
 import com.example.prettypetsandfriends.ui.screens.WeightTrackerScreen
@@ -54,7 +54,7 @@ fun NavigationPetApp() {
         composable("edit_profile") { UserEditProfileScreen(navController) }
         composable("add_pet") { AddPetScreen(navController) }
         composable("document") { DocumentsScreen(navController) }
-        composable("stats") { StatisticsScreen(navController) }
+        composable("help") { FAQScreen(navController) }
         composable("weight") { WeightTrackerScreen(navController)}
         composable("delete_profile") { DeleteAccountScreen(navController)}
         composable(

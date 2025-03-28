@@ -106,7 +106,7 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
         ) {
             item { QuickActionCard("Документы", R.drawable.ic_doc, onClick = { navController.navigate("document") })}
             item { QuickActionCard("Контроль веса", R.drawable.ic_weight, onClick = {navController.navigate("weight")} ) }
-            item { QuickActionCard("Статистика", R.drawable.ic_analytics, onClick = {navController.navigate("stats")} ) }
+            item { QuickActionCard("Помощь", R.drawable.ic_help, onClick = {navController.navigate("help")} ) }
         }
 
         Column(modifier = Modifier.padding(24.dp)) {
