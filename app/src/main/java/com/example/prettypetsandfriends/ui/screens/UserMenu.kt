@@ -47,6 +47,7 @@ import com.example.prettypetsandfriends.data.entities.User
 import com.example.prettypetsandfriends.data.entities.UserProfile
 import com.example.prettypetsandfriends.data.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
+import com.example.prettypetsandfriends.ui.components.NotificationSettingsDialog
 import com.example.prettypetsandfriends.ui.components.ThemeSelectionDialog
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -67,6 +68,7 @@ fun UserMenuScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val petState = LocalPetState.current
     val user by UserRepository().observeUserData().collectAsState(initial = null)
+    var showNotificationDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         ThemeManager.getThemeFlow(context).collect { theme ->
@@ -121,7 +123,7 @@ fun UserMenuScreen(navController: NavController) {
                 MenuCard(
                     title = "Уведомления",
                     icon = Icons.Default.Notifications,
-                    onClick = { navController.navigate("settings") }
+                    onClick = { showNotificationDialog = true  }
                 )
 
                 MenuCard(
@@ -153,6 +155,12 @@ fun UserMenuScreen(navController: NavController) {
                 )
             }
         }
+    }
+    if (showNotificationDialog) {
+        NotificationSettingsDialog(
+            onDismiss = { showNotificationDialog = false },
+            context = context
+        )
     }
 }
 

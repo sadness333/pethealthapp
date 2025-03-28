@@ -15,6 +15,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
+        if (!NotificationHelper.areNotificationsEnabled(this)) return
+
         message.notification?.let {
             showNotification(it.title, it.body)
         }
