@@ -21,7 +21,7 @@ fun CustomBottomNavigation(navController: NavController) {
         MenuItem("Главная", painterResource(id = R.drawable.ic_home_black), "main"),
         MenuItem("Дневник", painterResource(id = R.drawable.ic_book_black), "health_diary"),
         MenuItem("Питание", painterResource(id = R.drawable.ic_eating), "nutrition"),
-        MenuItem("Чат", painterResource(id = R.drawable.ic_chat_black), "ai_assistant"),
+        MenuItem("Чат", painterResource(id = R.drawable.ic_chat_black), "chat_list"),
         MenuItem("События", painterResource(id = R.drawable.ic_calendar_black), "calendar")
     )
 

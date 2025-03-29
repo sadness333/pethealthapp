@@ -18,6 +18,7 @@ import com.example.prettypetsandfriends.ui.screens.AddPetScreen
 import com.example.prettypetsandfriends.ui.screens.AiChatScreen
 import com.example.prettypetsandfriends.ui.screens.AuthScreen
 import com.example.prettypetsandfriends.ui.screens.CalendarScreen
+import com.example.prettypetsandfriends.ui.screens.ChatListScreen
 import com.example.prettypetsandfriends.ui.screens.DeleteAccountScreen
 import com.example.prettypetsandfriends.ui.screens.DocumentsScreen
 import com.example.prettypetsandfriends.ui.screens.FAQScreen
@@ -29,6 +30,7 @@ import com.example.prettypetsandfriends.ui.screens.RegistrationScreen
 import com.example.prettypetsandfriends.ui.screens.SplashScreen
 import com.example.prettypetsandfriends.ui.screens.UserEditProfileScreen
 import com.example.prettypetsandfriends.ui.screens.UserMenuScreen
+import com.example.prettypetsandfriends.ui.screens.VetChatScreen
 import com.example.prettypetsandfriends.ui.screens.WeightTrackerScreen
 
 @Composable
@@ -42,12 +44,16 @@ fun NavigationPetApp() {
         exitTransition = { ExitTransition.None},
         popEnterTransition = { EnterTransition.None },
         popExitTransition = {  ExitTransition.None }) {
+        composable("chat_list") { ChatListScreen(navController) }
+        composable("ai_chat") { AiChatScreen(navController)}
+        composable("vet_chat/{chatId}") { backStackEntry ->
+            VetChatScreen(navController, backStackEntry.arguments?.getString("chatId")!!)
+        }
         composable("splash") { SplashScreen(navController) }
         composable("main") { MainScreen(navController) }
         composable("auth") { AuthScreen(navController) }
         composable("registration") { RegistrationScreen(navController) }
         composable("health_diary") { HealthDiaryScreen(navController) }
-        composable("ai_assistant") { AiChatScreen(navController) }
         composable("calendar") { CalendarScreen(navController) }
         composable("nutrition") { FeedingScreen(navController) }
         composable("profile") { UserMenuScreen(navController)}

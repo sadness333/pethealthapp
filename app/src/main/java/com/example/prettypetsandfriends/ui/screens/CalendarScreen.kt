@@ -101,6 +101,7 @@ import java.util.UUID
 
 @Composable
 fun CalendarScreen(navController: NavController) {
+    var showPetDropdown by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val petId = LocalPetState.current.selectedPet?.id ?: ""
     var events by remember { mutableStateOf(emptyList<CalendarEvent>()) }
@@ -113,7 +114,13 @@ fun CalendarScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            CustomTopBar(navController = navController, name = "Календарь")
+            CustomTopBar(
+                navController = navController,
+                showPetDropdown = showPetDropdown,
+                onPetClick = { showPetDropdown = true },
+                onDismiss = { showPetDropdown = false },
+                name = "События",
+            )
         },
         bottomBar = { CustomBottomNavigation(navController = navController) },
         floatingActionButton = {
