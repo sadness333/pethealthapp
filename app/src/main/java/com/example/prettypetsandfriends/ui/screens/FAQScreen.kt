@@ -103,7 +103,6 @@ fun FAQScreen(navController: NavController) {
                 Text(
                     text = "Все что нужно знать о здоровье питомца",
                     style = MaterialTheme.typography.titleLarge.copy(
-                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     ),
                     modifier = Modifier

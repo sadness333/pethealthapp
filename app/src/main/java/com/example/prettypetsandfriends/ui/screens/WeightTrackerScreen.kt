@@ -1,6 +1,7 @@
 package com.example.prettypetsandfriends.ui.screens
 
 import android.graphics.Paint
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,18 +25,22 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.WeightHistory
 import com.example.prettypetsandfriends.data.repository.WeightRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -54,15 +59,22 @@ fun WeightTrackerScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val petId = LocalPetState.current.selectedPet?.id
 
-    LaunchedEffect(petId) {
-        try {
-            weightRepo.getWeightHistory(petId).collect { history ->
-                weightHistory = history.sortedByDescending { it.date }
+    fun loadData() {
+        scope.launch {
+            try {
+                weightRepo.getWeightHistory(petId).collect { history ->
+                    weightHistory = history.sortedByDescending { it.date }
+                }
+            } catch (e: Exception) {
+                // Обработка ошибок
             }
-        } catch (e: Exception) {
-            // Обработка ошибок
         }
     }
+
+    LaunchedEffect(petId) {
+        loadData()
+    }
+
 
     Scaffold(
         topBar = {
@@ -164,8 +176,10 @@ fun WeightTrackerScreen(navController: NavController) {
 @Composable
 private fun HistoryItem(entry: WeightHistory) {
     val petId = LocalPetState.current.selectedPet?.id
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val weightRepo = remember { WeightRepository() }
     val primaryColor = colorScheme.primary
 
     Card(
@@ -236,8 +250,22 @@ private fun HistoryItem(entry: WeightHistory) {
                 Button(
                     onClick = {
                         scope.launch {
-                            WeightRepository().deleteWeight(entry.id, petId)
-                            showDeleteDialog = false
+                            try {
+                                if (petId != null) {
+                                    weightRepo.deleteWeight(entry.id, petId)
+                                    withContext(Dispatchers.Main) {
+                                        showDeleteDialog = false
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(
+                                        context,
+                                        "Ошибка удаления: ${e.message}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -275,18 +303,7 @@ private fun WeightChart(entries: List<WeightHistory>) {
         )
 
         if (entries.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "Нет данных для графика",
-                    color = gridColor,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            EmptyWeightState()
             return@Column
         }
 
@@ -405,6 +422,50 @@ private fun WeightChart(entries: List<WeightHistory>) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyWeightState() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(240.dp)
+            .padding(vertical = 16.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_weight),
+                contentDescription = null,
+                tint = colorScheme.primary.copy(alpha = 0.8f),
+                modifier = Modifier.size(64.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Данные о весе отсутствуют",
+                style = MaterialTheme.typography.titleMedium,
+                color = colorScheme.onSurface.copy(alpha = 0.8f))
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Нажмите на кнопку + чтобы добавить\nпервое измерение",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurface.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp)
         }
     }
 }

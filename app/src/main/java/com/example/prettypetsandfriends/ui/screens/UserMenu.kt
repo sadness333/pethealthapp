@@ -1,5 +1,7 @@
 package com.example.prettypetsandfriends.ui.screens
 
+import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -144,11 +146,20 @@ fun UserMenuScreen(navController: NavController) {
                     icon = Icons.Default.ExitToApp,
                     onClick = {
                         petState.selectedPet = null
+
                         Firebase.auth.signOut()
                         googleSignInClient.signOut().addOnCompleteListener {
-                            navController.navigate("auth") {
-                                popUpTo("main") { inclusive = true }
+                            val intent = Intent(context, MainActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                putExtra("FORCE_LOGOUT", true)
                             }
+                            context.startActivity(intent)
+                            if (context is Activity) {
+                                context.overridePendingTransition(0, 0)
+                                context.finishAffinity()
+                            }
+
+                            context.cacheDir.deleteRecursively()
                         }
                     },
                     isDestructive = true

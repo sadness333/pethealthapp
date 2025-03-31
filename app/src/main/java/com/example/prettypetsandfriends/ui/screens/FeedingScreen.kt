@@ -3,6 +3,7 @@ package com.example.prettypetsandfriends.ui.screens
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -20,10 +22,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -42,6 +46,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
@@ -56,11 +61,14 @@ fun FeedingScreen(navController: NavController) {
     var showPetDropdown by remember { mutableStateOf(false) }
     val petState = LocalPetState.current
     val petId = petState.selectedPet?.id ?: ""
+    val hasPets = petState.allPets.isNotEmpty()
+
 
     var feedingTemplates by remember { mutableStateOf(emptyList<FeedingTemplate>()) }
 
 
     LaunchedEffect(petId) {
+        if (petId.isEmpty()) return@LaunchedEffect
         FeedingRepository.getFeedingRecords(petId) { records ->
             feedingRecords = records
         }
@@ -76,6 +84,7 @@ fun FeedingScreen(navController: NavController) {
     }
 
     LaunchedEffect(petId) {
+        if (petId.isEmpty()) return@LaunchedEffect
         Firebase.database.getReference("pets/$petId/nutrition/templates")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -88,6 +97,17 @@ fun FeedingScreen(navController: NavController) {
                     Log.e("FeedingScreen", "Error loading templates", error.toException())
                 }
             })
+    }
+
+    val currentDayCalories = feedingRecords
+        .filter { record ->
+            val recordDate = LocalDateTime.parse(record.feedingTime, DateTimeFormatter.ISO_DATE_TIME).toLocalDate()
+            recordDate == LocalDate.now()
+        }
+        .sumOf { it.nutrition.calories.toDouble() }.toFloat()
+
+    val sortedRecords = feedingRecords.sortedByDescending {
+        LocalDateTime.parse(it.feedingTime, DateTimeFormatter.ISO_DATE_TIME)
     }
 
     Scaffold(
@@ -115,6 +135,14 @@ fun FeedingScreen(navController: NavController) {
             }
         }
     ) { padding ->
+        if (!hasPets) {
+            NoPetsPlaceholder(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            )
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -122,7 +150,7 @@ fun FeedingScreen(navController: NavController) {
                 .fillMaxSize()
         ) {
             CalorieProgressCard(
-                current = feedingRecords.sumOf { it.nutrition.calories.toDouble() }.toFloat(),
+                current = currentDayCalories,
                 goal = dailyGoal,
                 onGoalChange = { newGoal ->
                     Firebase.database.getReference("pets/$petId/nutrition/dailyCalories").setValue(newGoal)
@@ -139,7 +167,7 @@ fun FeedingScreen(navController: NavController) {
             )
 
             FeedingHistorySection(
-                records = feedingRecords,
+                records = sortedRecords,
                 onDelete = { record ->
                     FeedingRepository.deleteFeedingRecord(petId, record.id)
                 },
@@ -171,6 +199,38 @@ fun FeedingScreen(navController: NavController) {
                     .push().setValue(newTemplate)
                 showTemplateConstructorDialog = false
             }
+        )
+    }
+}
+
+@Composable
+private fun NoPetsPlaceholder(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .padding(32.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_pets_black),
+            contentDescription = null,
+            modifier = Modifier.size(120.dp),
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+        )
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = "Добавьте питомца",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = "Для работы с разделом питания необходимо сначала добавить питомца в профиль",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 16.dp)
         )
     }
 }
@@ -352,6 +412,8 @@ private fun FeedingHistorySection(records: List<FeedingRecord>, onDelete: (Feedi
 @Composable
 private fun FeedingRecordItem(record: FeedingRecord, onDelete: () -> Unit, modifier: Modifier = Modifier) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val dateTime = LocalDateTime.parse(record.feedingTime, DateTimeFormatter.ISO_DATE_TIME)
+
     val iconRes = when (record.type) {
         FoodType.DRY -> R.drawable.ic_dry
         FoodType.WET -> R.drawable.ic_water
@@ -370,18 +432,31 @@ private fun FeedingRecordItem(record: FeedingRecord, onDelete: () -> Unit, modif
             Icon(painter = painterResource(id = iconRes), contentDescription = "Тип корма", tint = typeColor, modifier = Modifier.size(40.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(record.foodName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                    Text("${record.nutrition.calories.toInt()} ккал", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
                 Row {
-                    Icon(painter = painterResource(R.drawable.ic_time), contentDescription = "Время", modifier = Modifier.size(16.dp))
-                    Text(formatFeedingTime(record.feedingTime), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp))
+                    Text(
+                        text = dateTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = dateTime.format(DateTimeFormatter.ofPattern("dd MMM")),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
-                if (record.comment.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("✎ ${record.comment}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(8.dp))
+                Row {
+                    Text(
+                        text = record.foodName,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    NutritionBadge(
+                        value = record.nutrition.calories,
+                        unit = "ккал",
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
             IconButton(onClick = { showDeleteDialog = true }, modifier = Modifier.padding(start = 8.dp)) {
@@ -403,6 +478,22 @@ private fun FeedingRecordItem(record: FeedingRecord, onDelete: () -> Unit, modif
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) { Text("Отмена") }
             }
+        )
+    }
+}
+
+@Composable
+private fun NutritionBadge(value: Float, unit: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = "${value.toInt()} $unit",
+            color = color,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold
         )
     }
 }

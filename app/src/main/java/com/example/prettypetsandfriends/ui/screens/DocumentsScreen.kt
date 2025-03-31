@@ -5,8 +5,10 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,9 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -38,7 +42,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
@@ -104,6 +110,39 @@ fun DocumentsScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+            if (documents.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    EmptyDocumentsStub()
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(documents) { document ->
+                        DocumentItem(document) {
+                            try {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW).apply {
+                                        data = Uri.parse(document.url)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Ошибка открытия файла", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Кнопка загрузки (всегда внизу)
             Button(
                 onClick = { documentPicker.launch("*/*") },
                 modifier = Modifier
@@ -115,27 +154,6 @@ fun DocumentsScreen(navController: NavController) {
                 )
             ) {
                 Text("Загрузить документ")
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(documents) { document ->
-                    DocumentItem(document) {
-                        try {
-                            context.startActivity(
-                                Intent(Intent.ACTION_VIEW).apply {
-                                    data = Uri.parse(document.url)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                            )
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Ошибка открытия файла", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
             }
         }
     }
@@ -197,6 +215,61 @@ fun DocumentsScreen(navController: NavController) {
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun EmptyDocumentsStub() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(32.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(96.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_docs),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = "Здесь будут ваши документы",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Text(
+                text = "Нажмите кнопку ниже, чтобы добавить\nпервый документ для вашего питомца",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
+            )
+        }
     }
 }
 

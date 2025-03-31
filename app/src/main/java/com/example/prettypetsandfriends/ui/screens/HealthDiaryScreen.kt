@@ -40,9 +40,15 @@ fun HealthDiaryScreen(navController: NavController) {
     val petId = petState.selectedPet?.id
     val recordsRepository = remember { HealthRecordsRepository() }
     val records by recordsRepository.getHealthRecordsFlow(petId).collectAsState(initial = emptyList())
+
+
     val sortedRecords = remember(records) {
         records.sortedByDescending {
-            LocalDateTime.parse(it.date, DateTimeFormatter.ISO_DATE_TIME)
+            if (it.date.isNotBlank()) {
+                LocalDateTime.parse(it.date, DateTimeFormatter.ISO_DATE_TIME)
+            } else {
+                LocalDateTime.MIN
+            }
         }
     }
 
@@ -142,9 +148,9 @@ fun HealthRecordCard(record: HealthRecord) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 val (icon, tint) = when (record.type) {
-                    "VACCINATION" -> Pair(Icons.Default.Vaccines, Color(0xFF4CAF50))
-                    "TREATMENT" -> Pair(Icons.Default.MedicalServices, Color(0xFF2196F3))
-                    else -> Pair(Icons.Default.MedicalInformation, MaterialTheme.colorScheme.primary)
+                    "VACCINATION" -> Pair(Icons.Default.Vaccines, MaterialTheme.colorScheme.onSurface)
+                    "TREATMENT" -> Pair(Icons.Default.MedicalServices, MaterialTheme.colorScheme.onSurface)
+                    else -> Pair(Icons.Default.MedicalInformation, MaterialTheme.colorScheme.onSurface)
                 }
 
                 Icon(

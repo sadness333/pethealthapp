@@ -16,6 +16,7 @@ import com.example.prettypetsandfriends.backend.PetState
 import com.example.prettypetsandfriends.data.repository.PetRepository
 import com.example.prettypetsandfriends.ui.screens.AddPetScreen
 import com.example.prettypetsandfriends.ui.screens.AiChatScreen
+import com.example.prettypetsandfriends.ui.screens.AppointmentScreen
 import com.example.prettypetsandfriends.ui.screens.AuthScreen
 import com.example.prettypetsandfriends.ui.screens.CalendarScreen
 import com.example.prettypetsandfriends.ui.screens.ChatListScreen
@@ -60,6 +61,7 @@ fun NavigationPetApp() {
         composable("edit_profile") { UserEditProfileScreen(navController) }
         composable("add_pet") { AddPetScreen(navController) }
         composable("document") { DocumentsScreen(navController) }
+        composable("appointment") { AppointmentScreen(navController) }
         composable("help") { FAQScreen(navController) }
         composable("weight") { WeightTrackerScreen(navController)}
         composable("delete_profile") { DeleteAccountScreen(navController)}

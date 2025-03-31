@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.data.entities.ChatMessage
+import com.example.prettypetsandfriends.data.entities.DateMessageGroup
 import com.example.prettypetsandfriends.data.entities.Vet
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.google.firebase.auth.ktx.auth
@@ -41,6 +42,26 @@ fun VetChatScreen(navController: NavController, chatId: String) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val database = Firebase.database
+
+    val groupedMessages by remember(messages) {
+        derivedStateOf {
+            val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+            messages
+                .groupBy { message ->
+                    dateFormat.format(Date(message.getTimestampLong()))
+                }
+                .map { (date, msgs) -> DateMessageGroup(date, msgs) }
+        }
+    }
+
+    LaunchedEffect(groupedMessages) {
+        if (groupedMessages.isNotEmpty()) {
+            val totalItems = groupedMessages.sumOf { 1 + it.messages.size }
+            if (totalItems > 0) {
+                listState.animateScrollToItem(totalItems - 1)
+            }
+        }
+    }
 
     LaunchedEffect(chatId) {
         database.getReference("chats/$chatId/participants/doctor")
@@ -72,7 +93,6 @@ fun VetChatScreen(navController: NavController, chatId: String) {
                     messages.clear()
                     messages.addAll(newMessages)
 
-                    // Автопрокрутка к последнему сообщению
                     coroutineScope.launch {
                         if (messages.isNotEmpty()) {
                             listState.animateScrollToItem(messages.size - 1)
@@ -106,16 +126,19 @@ fun VetChatScreen(navController: NavController, chatId: String) {
                     .padding(horizontal = 16.dp),
                 state = listState
             ) {
-                items(messages) { message ->
-                    ChatBubble(
-                        message = message,
-                        isUserMessage = message.senderId == userId,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                groupedMessages.forEach { group ->
+                    item(key = "header_${group.dateString}") {
+                        DateHeader(date = group.dateString)
+                    }
+                    items(group.messages, key = { it.id }) { message ->
+                        ChatBubble(
+                            message = message,
+                            isUserMessage = message.senderId == userId,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
                 }
             }
-
-            // Поле ввода сообщения
             ChatInputField(
                 messageText = messageText,
                 onMessageChange = { messageText = it },
@@ -134,6 +157,26 @@ fun VetChatScreen(navController: NavController, chatId: String) {
                 }
             )
         }
+    }
+}
+
+@Composable
+fun DateHeader(date: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = date,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+        )
     }
 }
 

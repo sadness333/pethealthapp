@@ -1,6 +1,8 @@
 package com.example.prettypetsandfriends.ui.screens
 
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -22,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -41,14 +44,18 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -60,6 +67,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -77,21 +85,29 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.data.entities.Appointment
 import com.example.prettypetsandfriends.data.entities.CalendarEvent
 import com.example.prettypetsandfriends.data.entities.EventType
 import com.example.prettypetsandfriends.data.entities.RepeatMode
 import com.example.prettypetsandfriends.data.repository.CalendarRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
+import com.google.firebase.Firebase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.database
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Month
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -101,15 +117,34 @@ import java.util.UUID
 
 @Composable
 fun CalendarScreen(navController: NavController) {
+    val petState = LocalPetState.current
     var showPetDropdown by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val petId = LocalPetState.current.selectedPet?.id ?: ""
     var events by remember { mutableStateOf(emptyList<CalendarEvent>()) }
     var showAddEventDialog by remember { mutableStateOf(false) }
     var eventToEdit by remember { mutableStateOf<CalendarEvent?>(null) }
+    val hasPets = petState.allPets.isNotEmpty()
+    val appointments = remember { mutableStateOf<List<Appointment>>(emptyList()) }
+
+
 
     LaunchedEffect(petId) {
+        if (petId.isEmpty()) return@LaunchedEffect
         CalendarRepository.getEvents(petId) { events = it }
+
+        Firebase.database.reference.child("appointments")
+            .orderByChild("petId").equalTo(petId)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    appointments.value = snapshot.children.mapNotNull {
+                        it.getValue(Appointment::class.java)
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    Toast.makeText(context, "Ошибка загрузки записей", Toast.LENGTH_SHORT).show()
+                }
+            })
     }
 
     Scaffold(
@@ -142,6 +177,14 @@ fun CalendarScreen(navController: NavController) {
             }
         }
     ) { paddingValues ->
+        if (!hasPets) {
+            NoPetsPlaceholder(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp)
+            )
+            return@Scaffold
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -168,18 +211,13 @@ fun CalendarScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 DoctorAppointmentCard(
-                    events = events,
-                    petId = petId,
-                    modifier = Modifier.fillMaxWidth()
-                ) { updatedEvent, isBooking ->
-                    if (isBooking) {
-                        CalendarRepository.addEvent(petId, updatedEvent)
-                        events = events + updatedEvent
-                    } else {
-                        CalendarRepository.deleteEvent(petId, updatedEvent.id)
-                        events = events.filter { it.id != updatedEvent.id }
+                    appointments = appointments.value,
+                    navController = navController,
+                    onDelete = { appointment ->
+                        Firebase.database.reference.child("appointments/${appointment.id}").removeValue()
                     }
-                }
+                )
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -228,6 +266,36 @@ fun CalendarScreen(navController: NavController) {
                 events = events.map { if (it.id == editedEvent.id) editedEvent else it }
                 eventToEdit = null
             }
+        )
+    }
+}
+
+@Composable
+private fun NoPetsPlaceholder(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_pets_black),
+            contentDescription = null,
+            modifier = Modifier.size(120.dp),
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+        )
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = "Добавьте питомца",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = "Для работы с календарём событий необходимо сначала добавить питомца в профиль",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 16.dp)
         )
     }
 }
@@ -284,7 +352,6 @@ private fun CalendarHeader(
         Text(
             text = displayedMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("ru"))),
             style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
-            color = MaterialTheme.colorScheme.primary
         )
 
         IconButton(
@@ -322,7 +389,7 @@ private fun CalendarGrid(
 @Composable
 private fun CalendarDayCell(
     day: LocalDate,
-    currentMonth: java.time.Month,
+    currentMonth: Month,
     events: List<CalendarEvent>
 ) {
     val isCurrentMonth = (day.month == currentMonth)
@@ -370,264 +437,148 @@ private fun CalendarDayCell(
 
 @Composable
 fun DoctorAppointmentCard(
-    events: List<CalendarEvent>,
-    petId: String,
+    appointments: List<Appointment>,
+    navController: NavController,
     modifier: Modifier = Modifier,
-    onAppointmentAction: (CalendarEvent, Boolean) -> Unit
+    onDelete: (Appointment) -> Unit
 ) {
-    var showAppointmentDialog by remember { mutableStateOf(false) }
-
-    val doctorAppointments = events.filter { it.title.startsWith("Запись к врачу:") }
+    var expanded by remember { mutableStateOf(true) }
 
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(8.dp),
-        shape = MaterialTheme.shapes.large
+        elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Записи к врачу", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-            if (doctorAppointments.isNotEmpty()) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 300.dp)
-                ) {                     items(doctorAppointments) { appointment ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = appointment.title + " " +
-                                        appointment.date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale("ru"))) + " " +
-                                        (appointment.time?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: ""),
-                                modifier = Modifier.weight(1f)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    "Записи к врачу",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(
+                    onClick = { expanded = !expanded },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ExpandLess
+                        else Icons.Default.ExpandMore,
+                        contentDescription = "Свернуть/развернуть"
+                    )
+                }
+            }
+
+            AnimatedVisibility(visible = expanded) {
+                Column {
+                    if (appointments.isEmpty()) {
+                        Text(
+                            "Нет активных записей",
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 8.dp))
+                    } else {
+                        appointments.forEachIndexed { index, appointment ->
+                            AppointmentItem(
+                                appointment = appointment,
+                                onDelete = { onDelete(appointment) }
                             )
-                            Button(onClick = { onAppointmentAction(appointment, false) }) {
-                                Text("Отменить")
+                            if (index != appointments.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
                             }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
                 }
-            } else {
-                Text("Нет записей", color = Color.Gray)
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
             Button(
-                onClick = { showAppointmentDialog = true },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("Новая запись")
-            }
-        }
-    }
-
-    if (showAppointmentDialog) {
-        DoctorAppointmentDialog(
-            events = events,
-            petId = petId,
-            onDismiss = { showAppointmentDialog = false },
-            onConfirm = { newAppointment ->
-                onAppointmentAction(newAppointment, true)
-                showAppointmentDialog = false
-            }
-        )
-    }
-}
-
-@Composable
-fun DoctorAppointmentDialog(
-    events: List<CalendarEvent>,
-    petId: String,
-    onDismiss: () -> Unit,
-    onConfirm: (CalendarEvent) -> Unit
-) {
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
-    // Фиксированный список врачей (для примера)
-    val doctors = listOf("Dr. Иванов", "Dr. Петров", "Dr. Сидоров")
-    var selectedDoctor by remember { mutableStateOf(doctors.first()) }
-    // Фиксированный список целей записи
-    val purposes = listOf("Вакцинация", "Осмотр", "Консультация")
-    var selectedPurpose by remember { mutableStateOf(purposes.first()) }
-    var showDatePicker by remember { mutableStateOf(false) }
-
-    // Пример расписания для каждого врача
-    val doctorSchedules = mapOf(
-        "Dr. Иванов" to listOf(LocalTime.of(9, 0), LocalTime.of(9, 30), LocalTime.of(10, 0), LocalTime.of(10, 30), LocalTime.of(11, 0)),
-        "Dr. Петров" to listOf(LocalTime.of(10, 0), LocalTime.of(10, 30), LocalTime.of(11, 0), LocalTime.of(11, 30)),
-        "Dr. Сидоров" to listOf(LocalTime.of(8, 30), LocalTime.of(9, 0), LocalTime.of(9, 30), LocalTime.of(10, 0))
-    )
-    val availableTimes = doctorSchedules[selectedDoctor] ?: emptyList()
-
-    val appointmentTitle = "Запись к врачу: $selectedDoctor - $selectedPurpose"
-    val existingAppointment = events.find {
-        it.title == appointmentTitle && it.date == selectedDate && it.time == selectedTime
-    }
-    val isAvailable = (selectedTime != null && existingAppointment == null)
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Новая запись к врачу") },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                // Выбор даты
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Дата: " + selectedDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale("ru"))),
-                        modifier = Modifier.weight(1f)
-                    )
-                    Button(onClick = { showDatePicker = true }) { Text("Выбрать дату") }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                // Выбор врача
-                Text("Выберите врача:")
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    doctors.forEach { doctor ->
-                        FilterChip(
-                            selected = (selectedDoctor == doctor),
-                            onClick = { selectedDoctor = doctor },
-                            label = { Text(doctor) }
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                // Выбор цели записи
-                Text("Цель записи:")
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    purposes.forEach { purpose ->
-                        FilterChip(
-                            selected = (selectedPurpose == purpose),
-                            onClick = { selectedPurpose = purpose },
-                            label = { Text(purpose) }
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                // Выбор времени приёма (из доступных слотов)
-                Text("Выберите время:")
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    availableTimes.forEach { timeSlot ->
-                        FilterChip(
-                            selected = (selectedTime == timeSlot),
-                            onClick = { selectedTime = timeSlot },
-                            label = { Text(timeSlot.format(DateTimeFormatter.ofPattern("HH:mm"))) }
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                // Статус доступности
-                if (selectedTime == null) {
-                    Text("Пожалуйста, выберите время", color = Color.Red)
-                } else {
-                    if (existingAppointment != null) {
-                        Text("Слот недоступен для $selectedDoctor", color = Color.Red)
-                    } else {
-                        Text("Слот доступен", color = Color.Green)
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (selectedTime != null && existingAppointment == null) {
-                        val newAppointment = CalendarEvent(
-                            title = appointmentTitle,
-                            type = EventType.SINGLE,
-                            date = selectedDate,
-                            time = selectedTime,
-                            repeatMode = null,
-                            daysOfWeek = emptyList(),
-                            notificationEnabled = false,
-                            petId = petId
-                        )
-                        onConfirm(newAppointment)
-                    }
-                },
-                enabled = selectedTime != null && existingAppointment == null
-            ) {
-                Text("Сохранить")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
-        }
-    )
-
-    if (showDatePicker) {
-        AppointmentDatePicker(
-            initialDate = selectedDate,
-            onDateSelected = {
-                selectedDate = it
-                showDatePicker = false
-            },
-            onDismiss = { showDatePicker = false }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AppointmentDatePicker(
-    initialDate: LocalDate,
-    onDateSelected: (LocalDate) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val dateState = rememberDatePickerState(
-        initialSelectedDateMillis = initialDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-    )
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Выберите дату записи") },
-        text = {
-            DatePicker(
-                state = dateState,
-                colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = MaterialTheme.colorScheme.primary,
-                    selectedDayContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
+                onClick = { navController.navigate("appointment") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(360.dp)
-            )
-        },
-        confirmButton = {
-            Button(onClick = {
-                val selectedMillis = dateState.selectedDateMillis ?: System.currentTimeMillis()
-                val date = Instant.ofEpochMilli(selectedMillis).atZone(ZoneId.systemDefault()).toLocalDate()
-                onDateSelected(date)
-            }) { Text("Сохранить") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
-        }
-    )
-}
-
-@Composable
-fun CalendarEventList(
-    events: List<CalendarEvent>,
-    onEditEvent: (CalendarEvent) -> Unit,
-    onDeleteEvent: (UUID) -> Unit,
-    petId: String
-) {
-    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
-        items(events, key = { it.id }) { event ->
-            EventCard(
-                event = event,
-                onEdit = { onEditEvent(it) },
-                onDelete = { onDeleteEvent(it) },
-                petId = petId,
-                modifier = Modifier.animateContentSize()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+                    .padding(top = 12.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Новая запись", style = MaterialTheme.typography.labelLarge)
+            }
         }
     }
 }
+
+@Composable
+private fun AppointmentItem(appointment: Appointment, onDelete: () -> Unit) {
+    var vetName by remember { mutableStateOf("Загрузка...") }
+
+    if (appointment.status == "completed") return
+
+
+    val formattedDate = remember(appointment.date) {
+        runCatching {
+            LocalDate.parse(appointment.date)
+                .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+        }.getOrElse { "Некорректная дата" }
+    }
+
+    LaunchedEffect(appointment.doctorId) {
+        Firebase.database.reference.child("doctors/${appointment.doctorId}")
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    vetName = snapshot.child("name").getValue(String::class.java)
+                        ?: "Неизвестный врач"
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    vetName = "Ошибка загрузки"
+                }
+            })
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text("Врач: $vetName",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface)
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text("Дата: $formattedDate",
+                style = MaterialTheme.typography.bodyMedium)
+
+            Text("Время: ${appointment.time}",
+                style = MaterialTheme.typography.bodyMedium)
+
+            Text("Причина: ${appointment.reason}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = onDelete,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Отменить запись")
+            }
+        }
+    }
+}
+
 
 @Composable
 fun EventCard(
@@ -666,7 +617,7 @@ private fun EventHeader(event: CalendarEvent, expanded: Boolean, onExpand: () ->
                 if (event.type == EventType.REPEATING) R.drawable.ic_repeat else R.drawable.ic_event
             ),
             contentDescription = null,
-            tint = event.color,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)
         )
         Spacer(Modifier.width(16.dp))
@@ -1043,7 +994,7 @@ private fun EventTypeSelector(
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text("Тип события", style = MaterialTheme.typography.labelMedium)
-        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(EventType.values()) { type ->
                 FilterChip(
                     selected = (type == selectedType),
@@ -1062,7 +1013,7 @@ private fun RepeatModeSelector(
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text("Повторение", style = MaterialTheme.typography.labelMedium)
-        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(RepeatMode.values()) { mode ->
                 FilterChip(
                     selected = (mode == selectedMode),
@@ -1081,7 +1032,7 @@ private fun DayOfWeekSelector(
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text("Дни недели", style = MaterialTheme.typography.labelMedium)
-        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(DayOfWeek.values()) { day ->
                 FilterChip(
                     selected = (day in selectedDays),
@@ -1116,7 +1067,7 @@ private fun TimePickerDialog(
         onDismissRequest = onDismiss,
         title = { Text("Выберите время") },
         text = {
-            androidx.compose.material3.TimePicker(
+            TimePicker(
                 state = timePickerState,
                 modifier = Modifier.padding(16.dp)
             )

@@ -1,7 +1,6 @@
 package com.example.prettypetsandfriends.data.entities
 
 import com.google.firebase.database.ServerValue
-import java.util.UUID
 
 data class ChatMessage(
     val id: String = "",
