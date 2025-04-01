@@ -1,5 +1,6 @@
 package com.example.prettypetsandfriends.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,12 +31,20 @@ import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.backend.getYearsText
+import com.example.prettypetsandfriends.data.entities.Appointment
 import com.example.prettypetsandfriends.data.entities.Pet
 import com.example.prettypetsandfriends.data.entities.PetEvent
 import com.example.prettypetsandfriends.data.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
+import com.google.firebase.Firebase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.database
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -44,6 +54,7 @@ fun MainScreen(navController: NavController) {
     var showPetDropdown by remember { mutableStateOf(false) }
     val petState = LocalPetState.current
     val currentUser = petState.petRepository.getCurrentUser()
+
 
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
@@ -189,6 +200,36 @@ fun NotifyCard(event: PetEvent?) {
 }
 @Composable
 fun ModernPetCard(pet: Pet, navController: NavController) {
+    val appointments = remember { mutableStateListOf<Appointment>() }
+    val petId = pet.id
+    val lastWeight = pet.weightHistory.values
+        .maxByOrNull { it.date }
+        ?.value
+
+    LaunchedEffect(petId) {
+        Firebase.database.reference.child("appointments")
+            .orderByChild("petId").equalTo(petId)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    appointments.clear()
+                    for (child in snapshot.children) {
+                        val appointment = child.getValue(Appointment::class.java)
+                        appointment?.let { appointments.add(it) }
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Firebase", "Ошибка: ${error.message}")
+                }
+            })
+    }
+
+
+    val latestDate = appointments
+        .filter { it.status == "completed" }
+        .maxOfOrNull {
+            LocalDate.parse(it.date, DateTimeFormatter.ISO_DATE)
+        }?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) ?: "Нет данных"
+
     Card(
         modifier = Modifier
             .width(280.dp)
@@ -233,8 +274,9 @@ fun ModernPetCard(pet: Pet, navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                InfoChip("Вес", "${pet.statistics.lastWeight} кг")
-                InfoChip("Последний визит", "2 дн. назад")
+                InfoChip("Вес", "$lastWeight кг")
+                InfoChip("Последний визит" +
+                        " у врача", latestDate)
             }
         }
     }

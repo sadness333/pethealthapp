@@ -42,6 +42,8 @@ class PetState(val petRepository: PetRepository) {
                         breed = pet.breed,
                         age = pet.age,
                         ownerId = pet.ownerId,
+                        weight = pet.weight,
+                        weightHistory = pet.weightHistory,
                         photoUrl = pet.photoUrl,
                         nutrition = pet.nutrition
                     )
