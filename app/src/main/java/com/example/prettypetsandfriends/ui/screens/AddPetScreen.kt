@@ -29,8 +29,10 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.example.prettypetsandfriends.data.entities.Pet
+import com.example.prettypetsandfriends.data.entities.WeightHistory
 import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 
 @Composable
@@ -178,18 +180,14 @@ fun AddPetScreen(navController: NavController) {
                                         fileUri = uri
                                     )
                                 }
-
                                 val newPet = Pet(
                                     name = name,
                                     type = petType,
                                     breed = breed,
                                     age = age.toInt(),
+                                    weight = weight.toDouble(),
                                     ownerId = currentUser.uid,
-                                    photoUrl = photoUrl,
-                                    statistics = Pet.PetStatistics(
-                                        lastWeight = weight.toDouble(),
-                                        avgWeight = weight.toDouble()
-                                    ),
+                                    photoUrl = photoUrl ?: "https://cdn-icons-png.flaticon.com/128/4225/4225935.png",
                                     nutrition = Pet.PetNutrition(
                                         dailyCalories = calories.toIntOrNull() ?: 0,
                                         vetRecommendations = vetNotes

@@ -43,7 +43,6 @@ class PetState(val petRepository: PetRepository) {
                         age = pet.age,
                         ownerId = pet.ownerId,
                         photoUrl = pet.photoUrl,
-                        statistics = pet.statistics,
                         nutrition = pet.nutrition
                     )
                 }

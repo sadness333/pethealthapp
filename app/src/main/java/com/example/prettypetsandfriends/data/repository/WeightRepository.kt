@@ -1,7 +1,6 @@
 package com.example.prettypetsandfriends.data.repository
 
 import com.example.prettypetsandfriends.backend.LocalPetState
-import com.example.prettypetsandfriends.data.entities.WeightEntry
 import com.example.prettypetsandfriends.data.entities.WeightHistory
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
