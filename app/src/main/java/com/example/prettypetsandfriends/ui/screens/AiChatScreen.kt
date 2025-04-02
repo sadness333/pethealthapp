@@ -1,17 +1,14 @@
 package com.example.prettypetsandfriends.ui.screens
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -21,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,9 +26,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -49,17 +42,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.prettypetsandfriends.backend.service.RetrofitClient
+import com.example.prettypetsandfriends.data.entities.ai.ClaudeMessage
+import com.example.prettypetsandfriends.data.entities.ai.ClaudeRequest
 import com.example.prettypetsandfriends.data.entities.ChatMessage
-import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
-import kotlinx.coroutines.CoroutineScope
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.database.ChildEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.database
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun AiChatScreen(navController: NavController) {
@@ -69,6 +65,31 @@ fun AiChatScreen(navController: NavController) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    val database = Firebase.database.reference
+
+
+    LaunchedEffect(Unit) {
+        val userId = Firebase.auth.currentUser?.uid ?: return@LaunchedEffect
+
+            database.child("chats")
+            .child(userId)
+            .child("messages")
+            .addChildEventListener(object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, prevKey: String?) {
+                    snapshot.getValue(ChatMessage::class.java)?.let { message ->
+                        if (!chatMessages.any { it.timestamp == message.timestamp }) {
+                            chatMessages.add(message)
+                        }
+                    }
+                }
+                override fun onChildChanged(snapshot: DataSnapshot, prevKey: String?) {}
+                override fun onChildRemoved(snapshot: DataSnapshot) {}
+                override fun onChildMoved(snapshot: DataSnapshot, prevKey: String?) {}
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Firebase", "Error: ${error.message}")
+                }
+            })
+    }
 
     LaunchedEffect(chatMessages.size) {
         if (chatMessages.isNotEmpty()) {
@@ -110,7 +131,7 @@ fun AiChatScreen(navController: NavController) {
                     ) {
                         ChatBubble(
                             message = message,
-                            isUserMessage = message.isUser
+                            isUserMessage = message.user
                         )
                     }
                 }
@@ -131,34 +152,81 @@ fun AiChatScreen(navController: NavController) {
                 onMessageChange = { messageText = it },
                 onSend = {
                     if (messageText.isNotBlank()) {
-                        chatMessages.add(
-                            ChatMessage(
-                                text = messageText,
-                                isUser = true,
-                                timestamp = System.currentTimeMillis()
-                            )
+                        val userMessage = ChatMessage(
+                            text = messageText,
+                            user = true,
+                            timestamp = System.currentTimeMillis()
                         )
+
+                        saveMessageToFirebase(userMessage)
+                        chatMessages.add(userMessage)
                         messageText = ""
                         isLoading = true
 
-                        CoroutineScope(Dispatchers.IO).launch {
-                            delay(1000)
-                            withContext(Dispatchers.Main) {
-                                chatMessages.add(
-                                    ChatMessage(
-                                        text = generateAiResponse(),
-                                        isUser = false,
-                                        timestamp = System.currentTimeMillis()
+                        coroutineScope.launch(Dispatchers.IO) {
+                            try {
+                                val response = RetrofitClient.instance.sendMessage(
+                                    ClaudeRequest(
+                                        model = "claude-3-7-sonnet-20250219",
+                                        system = "You are a veterinary assistant. Answer in Russian.",
+                                        messages = listOf(
+                                            ClaudeMessage(
+                                                role = "user",
+                                                content = userMessage.text
+                                            )
+                                        ),
+                                        maxTokens = 1024
                                     )
                                 )
-                                isLoading = false
+
+                                if (response.isSuccessful) {
+                                    val aiText = response.body()?.content?.firstOrNull()?.text
+                                        ?: "Ошибка получения ответа"
+
+                                    val aiMessage = ChatMessage(
+                                        text = aiText,
+                                        user = false,
+                                        timestamp = System.currentTimeMillis()
+                                    )
+
+                                    withContext(Dispatchers.Main) {
+                                        saveMessageToFirebase(aiMessage)
+                                        chatMessages.add(aiMessage)
+                                        isLoading = false
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        isLoading = false
+                                        Log.e("API", "Ошибка API: ${response.code()}")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    isLoading = false
+                                    Log.e("Network", "Ошибка сети: ${e.message}")
+                                }
                             }
                         }
                     }
+
                 }
             )
         }
     }
+}
+
+private fun saveMessageToFirebase(message: ChatMessage) {
+    val userId = Firebase.auth.currentUser?.uid ?: return
+
+    Firebase.database.reference
+        .child("chats")
+        .child(userId)
+        .child("messages")
+        .push()
+        .setValue(message)
+        .addOnFailureListener { e ->
+            Log.e("Firebase", "Error saving message", e)
+        }
 }
 
 @Composable
@@ -246,16 +314,4 @@ private fun AnimatedDot(alpha: Float, size: Dp) {
                 shape = CircleShape
             )
     )
-}
-
-private fun generateAiResponse(): String {
-    val responses = listOf(
-        "Рекомендую провести общий анализ крови.",
-        "Нормальная температура для кошек: 38-39.5°C",
-        "Пожалуйста, опишите симптомы подробнее.",
-        "Советую записаться на профилактический осмотр.",
-        "Ваш питомец должен пить достаточное количество воды.",
-        "Рекомендованная частота кормления: 2 раза в день."
-    )
-    return responses.random()
 }

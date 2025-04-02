@@ -6,7 +6,7 @@ data class ChatMessage(
     val id: String = "",
     val text: String = "",
     val senderId: String = "",
-    val isUser: Boolean = false,
+    val user: Boolean = false,
     val timestamp: Any = ServerValue.TIMESTAMP
 ) {
 
