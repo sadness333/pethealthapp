@@ -1,7 +1,6 @@
 package com.example.prettypetsandfriends.ui.screens
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,9 +15,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.utils.LocalPetState
 import com.example.prettypetsandfriends.backend.PetState
-import com.example.prettypetsandfriends.data.repository.PetRepository
+import com.example.prettypetsandfriends.backend.repository.PetRepository
 import com.example.prettypetsandfriends.ui.navigation.NavigationPetApp
 import com.example.prettypetsandfriends.ui.theme.PrettypetsandfriendsTheme
 

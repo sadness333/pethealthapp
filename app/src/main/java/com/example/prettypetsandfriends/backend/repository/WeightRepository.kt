@@ -1,6 +1,5 @@
-package com.example.prettypetsandfriends.data.repository
+package com.example.prettypetsandfriends.backend.repository
 
-import com.example.prettypetsandfriends.backend.LocalPetState
 import com.example.prettypetsandfriends.data.entities.WeightHistory
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -11,8 +10,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.time.Instant
-import java.time.ZoneId
 
 class WeightRepository {
     private val database = Firebase.database.reference

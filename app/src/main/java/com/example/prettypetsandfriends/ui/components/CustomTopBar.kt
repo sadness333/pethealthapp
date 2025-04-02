@@ -1,11 +1,8 @@
 package com.example.prettypetsandfriends.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,9 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.utils.LocalPetState
 import com.example.prettypetsandfriends.data.entities.Pet
-import com.example.prettypetsandfriends.data.repository.UserRepository
+import com.example.prettypetsandfriends.backend.repository.UserRepository
 
 @Composable
 fun CustomTopBar(

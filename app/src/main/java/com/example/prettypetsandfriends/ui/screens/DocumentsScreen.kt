@@ -47,10 +47,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.utils.LocalPetState
 import com.example.prettypetsandfriends.data.entities.Document
-import com.example.prettypetsandfriends.data.repository.PetRepository
-import com.example.prettypetsandfriends.data.repository.StorageRepository
+import com.example.prettypetsandfriends.backend.repository.PetRepository
+import com.example.prettypetsandfriends.backend.repository.StorageRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import kotlinx.coroutines.CoroutineScope

@@ -24,29 +24,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,12 +45,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.utils.LocalPetState
 import com.example.prettypetsandfriends.data.entities.Appointment
+import com.example.prettypetsandfriends.data.entities.Pet
 import com.example.prettypetsandfriends.data.entities.SlotStatus
 import com.example.prettypetsandfriends.data.entities.TimeSlot
 import com.example.prettypetsandfriends.data.entities.Vet
@@ -72,7 +62,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -95,6 +84,7 @@ fun AppointmentScreen(navController: NavController) {
     var notes by remember { mutableStateOf("") }
     val petId = LocalPetState.current.selectedPet?.id ?: ""
     val currentUser = LocalPetState.current.petRepository.getCurrentUser()
+    val currentPet = LocalPetState.current.selectedPet
 
 
     LaunchedEffect(selectedVet) {
@@ -108,6 +98,9 @@ fun AppointmentScreen(navController: NavController) {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     vets.value = snapshot.children.mapNotNull {
                         it.getValue(Vet::class.java)?.copy(id = it.key ?: "")
+                    }
+                    if (vets.value.isNotEmpty()) {
+                        selectedVet = vets.value.first()
                     }
                     isLoading.value = false
                 }
@@ -136,6 +129,8 @@ fun AppointmentScreen(navController: NavController) {
             if (isLoading.value) {
                 CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
             } else {
+                PetCard(currentPet)
+
                 VetSelectionCard(
                     vets = vets.value,
                     selectedVet = selectedVet,
@@ -285,6 +280,52 @@ fun AppointmentScreen(navController: NavController) {
                 ) {
                     Text("Сохранить запись", modifier = Modifier.padding(4.dp))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PetCard(pet: Pet?) {
+    if (pet == null) return
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = pet.photoUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = pet.name,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = "${pet.age}, ${pet.breed}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

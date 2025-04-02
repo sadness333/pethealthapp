@@ -1,7 +1,6 @@
 package com.example.prettypetsandfriends.ui.screens
 
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,12 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.backend.LocalPetState
-import com.example.prettypetsandfriends.backend.getYearsText
+import com.example.prettypetsandfriends.utils.LocalPetState
 import com.example.prettypetsandfriends.data.entities.Appointment
 import com.example.prettypetsandfriends.data.entities.Pet
 import com.example.prettypetsandfriends.data.entities.PetEvent
-import com.example.prettypetsandfriends.data.repository.UserRepository
+import com.example.prettypetsandfriends.backend.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.google.firebase.Firebase
@@ -42,9 +40,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -261,7 +257,7 @@ fun ModernPetCard(pet: Pet, navController: NavController) {
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "${getYearsText(pet.age)}, порода: ${pet.breed}",
+                        text = "${pet.age}, порода: ${pet.breed}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

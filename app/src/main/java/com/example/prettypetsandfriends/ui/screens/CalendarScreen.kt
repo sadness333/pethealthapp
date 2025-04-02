@@ -78,12 +78,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.utils.LocalPetState
 import com.example.prettypetsandfriends.data.entities.Appointment
 import com.example.prettypetsandfriends.data.entities.CalendarEvent
 import com.example.prettypetsandfriends.data.entities.EventType
 import com.example.prettypetsandfriends.data.entities.RepeatMode
-import com.example.prettypetsandfriends.data.repository.CalendarRepository
+import com.example.prettypetsandfriends.backend.repository.CalendarRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.google.firebase.Firebase
@@ -430,7 +430,10 @@ fun DoctorAppointmentCard(
     modifier: Modifier = Modifier,
     onDelete: (Appointment) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(true) }
+    var expanded by remember { mutableStateOf(false) }
+    val activeAppointments = remember(appointments) {
+        appointments.filter { it.status.lowercase() != "completed" }
+    }
 
     Card(
         modifier = modifier
@@ -462,11 +465,8 @@ fun DoctorAppointmentCard(
 
             AnimatedVisibility(visible = expanded) {
                 Column {
-                    if (appointments.isEmpty()) {
-                        Text(
-                            "Нет активных записей",
-                            color = Color.Gray,
-                            modifier = Modifier.padding(top = 8.dp))
+                    if (activeAppointments.isEmpty() or appointments.isEmpty()) {
+                            EmptyAppointmentsState()
                     } else {
                         appointments.forEachIndexed { index, appointment ->
                             AppointmentItem(
@@ -494,6 +494,41 @@ fun DoctorAppointmentCard(
                 Text("Новая запись", style = MaterialTheme.typography.labelLarge)
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyAppointmentsState() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_calendar_black),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            modifier = Modifier.size(48.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Нет предстоящих записей",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Нажмите 'Новая запись' чтобы запланировать визит к ветеринару",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp)
+        )
     }
 }
 

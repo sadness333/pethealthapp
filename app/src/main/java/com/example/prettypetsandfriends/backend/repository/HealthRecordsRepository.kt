@@ -1,4 +1,4 @@
-package com.example.prettypetsandfriends.data.repository
+package com.example.prettypetsandfriends.backend.repository
 
 import com.example.prettypetsandfriends.data.entities.HealthRecord
 import com.google.firebase.database.DataSnapshot

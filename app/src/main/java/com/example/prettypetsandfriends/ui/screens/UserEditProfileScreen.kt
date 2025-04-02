@@ -21,9 +21,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.prettypetsandfriends.data.repository.PetRepository
-import com.example.prettypetsandfriends.data.repository.StorageRepository
-import com.example.prettypetsandfriends.data.repository.UserRepository
+import com.example.prettypetsandfriends.backend.repository.PetRepository
+import com.example.prettypetsandfriends.backend.repository.StorageRepository
+import com.example.prettypetsandfriends.backend.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.ui.theme.Purple40
 import kotlinx.coroutines.CoroutineScope

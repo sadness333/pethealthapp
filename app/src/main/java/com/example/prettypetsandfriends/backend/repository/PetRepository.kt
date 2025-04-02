@@ -1,4 +1,4 @@
-package com.example.prettypetsandfriends.data.repository
+package com.example.prettypetsandfriends.backend.repository
 
 import androidx.compose.runtime.rememberCoroutineScope
 import com.example.prettypetsandfriends.data.entities.Pet

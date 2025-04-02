@@ -3,17 +3,11 @@ package com.example.prettypetsandfriends.ui.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.prettypetsandfriends.backend.LocalPetState
-import com.example.prettypetsandfriends.backend.PetState
-import com.example.prettypetsandfriends.data.repository.PetRepository
 import com.example.prettypetsandfriends.ui.screens.AddPetScreen
 import com.example.prettypetsandfriends.ui.screens.AiChatScreen
 import com.example.prettypetsandfriends.ui.screens.AppointmentScreen

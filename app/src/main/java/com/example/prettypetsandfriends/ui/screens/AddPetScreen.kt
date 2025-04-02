@@ -22,17 +22,16 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.data.repository.PetRepository
-import com.example.prettypetsandfriends.data.repository.StorageRepository
+import com.example.prettypetsandfriends.backend.repository.PetRepository
+import com.example.prettypetsandfriends.backend.repository.StorageRepository
 import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.example.prettypetsandfriends.data.entities.DateTransformation
 import com.example.prettypetsandfriends.data.entities.Pet
-import com.example.prettypetsandfriends.data.entities.WeightHistory
 import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 
 @Composable
@@ -43,9 +42,8 @@ fun AddPetScreen(navController: NavController) {
     val storageRepo = remember { StorageRepository() }
     val currentUser = repository.getCurrentUser()
 
-    // Состояния полей
     var name by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
+    var birthYear by remember { mutableStateOf("") }
     var breed by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var petType by remember { mutableStateOf("Кот") }
@@ -101,10 +99,18 @@ fun AddPetScreen(navController: NavController) {
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
-                        value = age,
-                        onValueChange = { if (it.all { c -> c.isDigit() }) age = it },
-                        label = { Text("Возраст*") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        value = birthYear,
+                        onValueChange = { newValue ->
+                            val filtered = newValue.filter { it.isDigit() }.take(8)
+                            birthYear = filtered
+                        },
+                        label = { Text("Дата рождения*") },
+                        placeholder = { Text("дд.мм.гггг") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            autoCorrect = false
+                        ),
+                        visualTransformation = DateTransformation(),
                         modifier = Modifier.weight(1f)
                     )
 
@@ -162,7 +168,7 @@ fun AddPetScreen(navController: NavController) {
 
                 SaveButton(
                     isLoading = isLoading,
-                    enabled = name.isNotEmpty() && age.isNotEmpty() && weight.isNotEmpty(),
+                    enabled = name.isNotEmpty() && birthYear.isNotEmpty() && weight.isNotEmpty(),
                     onClick = {
                         if (currentUser == null) {
                             errorMessage = "Требуется авторизация"
@@ -184,7 +190,7 @@ fun AddPetScreen(navController: NavController) {
                                     name = name,
                                     type = petType,
                                     breed = breed,
-                                    age = age.toInt(),
+                                    birthYear = birthYear,
                                     weight = weight.toDouble(),
                                     ownerId = currentUser.uid,
                                     photoUrl = photoUrl ?: "https://cdn-icons-png.flaticon.com/128/4225/4225935.png",
@@ -360,4 +366,47 @@ fun PetTypeDropdown(
 
 private fun String.isValidDecimal(): Boolean {
     return matches(Regex("^\\d*\\.?\\d*$"))
+}
+
+@Composable
+fun DateInputField(onDateChange: (String) -> Unit) {
+    var rawDate by remember { mutableStateOf("") }
+    var displayDate by remember { mutableStateOf("") }
+    var isError by remember { mutableStateOf(false) }
+
+    fun updateDisplayDate(newRawDate: String) {
+        val formatted = buildString {
+            for (i in newRawDate.indices) {
+                append(newRawDate[i])
+                when (i) {
+                    1, 3 -> if (newRawDate.length > i + 1) append(".")
+                }
+            }
+        }
+        displayDate = formatted
+        onDateChange(formatted)
+        isError = formatted.length < 10 && formatted.isNotEmpty()
+    }
+
+    OutlinedTextField(
+        value = displayDate,
+        onValueChange = { newText ->
+            val digits = newText.filter { it.isDigit() }.take(8)
+            rawDate = digits
+            updateDisplayDate(digits)
+        },
+        label = { Text("Дата рождения*") },
+        placeholder = { Text("дд.мм.гггг") },
+        isError = isError,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.width(200.dp)
+    )
+
+    if (isError) {
+        Text(
+            text = "Формат: дд.мм.гггг",
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.labelSmall
+        )
+    }
 }

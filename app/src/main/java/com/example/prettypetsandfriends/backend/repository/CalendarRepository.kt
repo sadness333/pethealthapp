@@ -1,4 +1,4 @@
-package com.example.prettypetsandfriends.data.repository
+package com.example.prettypetsandfriends.backend.repository
 
 import android.util.Log
 import androidx.compose.ui.graphics.Color

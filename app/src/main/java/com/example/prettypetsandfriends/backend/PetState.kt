@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.prettypetsandfriends.data.entities.Pet
-import com.example.prettypetsandfriends.data.repository.PetRepository
+import com.example.prettypetsandfriends.backend.repository.PetRepository
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
@@ -40,7 +40,7 @@ class PetState(val petRepository: PetRepository) {
                         name = pet.name,
                         type = pet.type,
                         breed = pet.breed,
-                        age = pet.age,
+                        birthYear = pet.birthYear,
                         ownerId = pet.ownerId,
                         weight = pet.weight,
                         weightHistory = pet.weightHistory,

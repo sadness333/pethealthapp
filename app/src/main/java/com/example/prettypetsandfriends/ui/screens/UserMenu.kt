@@ -2,7 +2,6 @@ package com.example.prettypetsandfriends.ui.screens
 
 import android.app.Activity
 import android.content.Intent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,16 +37,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.R
-import com.example.prettypetsandfriends.backend.LocalPetState
+import com.example.prettypetsandfriends.utils.LocalPetState
 import com.example.prettypetsandfriends.data.entities.User
-import com.example.prettypetsandfriends.data.entities.UserProfile
-import com.example.prettypetsandfriends.data.repository.UserRepository
+import com.example.prettypetsandfriends.backend.repository.UserRepository
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
 import com.example.prettypetsandfriends.ui.components.NotificationSettingsDialog
 import com.example.prettypetsandfriends.ui.components.ThemeSelectionDialog
