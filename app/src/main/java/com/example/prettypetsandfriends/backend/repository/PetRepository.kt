@@ -44,7 +44,6 @@ class PetRepository {
 
             try {
                 newPetRef.setValue(pet.copy(id = petId)).await()
-                database.child("users/${pet.ownerId}/pets/$petId").setValue(true).await()
                 petId
             } catch (e: Exception) {
                 throw e

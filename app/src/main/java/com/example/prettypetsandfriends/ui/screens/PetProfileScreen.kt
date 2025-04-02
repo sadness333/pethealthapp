@@ -1,35 +1,22 @@
 package com.example.prettypetsandfriends.ui.screens
 
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Vaccines
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,25 +24,32 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.repository.HealthRecordsRepository
+import com.example.prettypetsandfriends.backend.repository.StorageRepository
+import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
+import com.example.prettypetsandfriends.ui.components.CustomTopBar
+import com.example.prettypetsandfriends.ui.components.DatePickerSection
 import com.example.prettypetsandfriends.utils.LocalPetState
 import com.example.prettypetsandfriends.data.entities.Appointment
 import com.example.prettypetsandfriends.data.entities.HealthRecord
 import com.example.prettypetsandfriends.data.entities.Pet
-import com.example.prettypetsandfriends.ui.components.CustomTopBar
-import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
 
 @Composable
 fun PetProfileScreen(petId: String, navController: NavController) {
@@ -63,6 +57,21 @@ fun PetProfileScreen(petId: String, navController: NavController) {
     val pet = remember(petId) { petState.getPetById(petId) }
     val appointments = remember { mutableStateListOf<Appointment>() }
     val context = LocalContext.current
+    val database = Firebase.database.reference
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var currentPet by remember { mutableStateOf(petState.getPetById(petId)) }
+
+    LaunchedEffect(petId) {
+        database.child("pets").child(petId).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                currentPet = snapshot.getValue(Pet::class.java)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                Toast.makeText(context, "Ошибка загрузки данных", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
 
     LaunchedEffect(petId) {
         Firebase.database.reference.child("appointments")
@@ -80,6 +89,173 @@ fun PetProfileScreen(petId: String, navController: NavController) {
                     Toast.makeText(context, "Ошибка загрузки записей", Toast.LENGTH_SHORT).show()
                 }
             })
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Удаление питомца") },
+            text = { Text("Вы уверены, что хотите удалить ${currentPet?.name}?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        database.child("pets").child(petId).removeValue()
+                        navController.popBackStack()
+                        Toast.makeText(context, "Питомец удалён", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                ) { Text("Удалить") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Отмена") }
+            }
+        )
+    }
+
+    if (showEditDialog && currentPet != null) {
+        var name by remember { mutableStateOf(currentPet!!.name) }
+        var breed by remember { mutableStateOf(currentPet!!.breed) }
+        var birthYear by remember { mutableStateOf(currentPet!!.birthYear) }
+        var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+        var newImageUrl by remember { mutableStateOf(currentPet!!.photoUrl) }
+        val storageRepository = remember { StorageRepository() }
+        val coroutineScope = rememberCoroutineScope()
+
+        val imagePickerLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            if (uri != null) {
+                selectedImageUri = uri
+            }
+        }
+
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("Редактирование профиля") },
+            text = {
+                Column(Modifier.padding(8.dp)) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Имя") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = breed,
+                        onValueChange = { breed = it },
+                        label = { Text("Порода") }
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    DatePickerSection(
+                        selectedDate = birthYear,
+                        onDateSelected = { birthYear = it }
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { imagePickerLauncher.launch("image/*") }
+                            .padding(8.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            if (selectedImageUri != null) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(selectedImageUri),
+                                    contentDescription = "Выбранное изображение",
+                                    modifier = Modifier
+                                        .width(150.dp)
+                                        .height(150.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(text = "Выбрать фото")
+                            } else {
+                                Image(
+                                    painter = rememberAsyncImagePainter(newImageUrl),
+                                    contentDescription = "Текущее изображение",
+                                    modifier = Modifier
+                                        .width(150.dp)
+                                        .height(150.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(text = "Выбрать фото")
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (selectedImageUri != null) {
+                            coroutineScope.launch {
+                                try {
+                                    val url = storageRepository.uploadPetImage(currentPet!!.ownerId, selectedImageUri!!)
+                                    newImageUrl = url
+                                    val updates = hashMapOf<String, Any>(
+                                        "name" to name,
+                                        "breed" to breed,
+                                        "birthYear" to birthYear,
+                                        "photoUrl" to (newImageUrl ?: "https://cdn-icons-png.flaticon.com/128/4225/4225935.png")
+                                    )
+                                    database.child("pets").child(petId).updateChildren(updates)
+                                        .addOnSuccessListener {
+                                            currentPet = currentPet?.copy(
+                                                name = name,
+                                                breed = breed,
+                                                birthYear = birthYear,
+                                                photoUrl = newImageUrl
+                                            )
+                                            showEditDialog = false
+                                            Toast.makeText(context, "Данные обновлены", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(context, "Ошибка обновления", Toast.LENGTH_SHORT).show()
+                                        }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Ошибка загрузки фото", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            val updates = hashMapOf<String, Any>(
+                                "name" to name,
+                                "breed" to breed,
+                                "birthYear" to birthYear
+                            )
+                            database.child("pets").child(petId).updateChildren(updates)
+                                .addOnSuccessListener {
+                                    currentPet = currentPet?.copy(
+                                        name = name,
+                                        breed = breed,
+                                        birthYear = birthYear
+                                    )
+                                    showEditDialog = false
+                                    Toast.makeText(context, "Данные обновлены", Toast.LENGTH_SHORT).show()
+                                }
+                                .addOnFailureListener {
+                                    Toast.makeText(context, "Ошибка обновления", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    }
+                ) {
+                    Text("Сохранить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) { Text("Отмена") }
+            }
+        )
     }
 
     Scaffold(
@@ -102,13 +278,23 @@ fun PetProfileScreen(petId: String, navController: NavController) {
         } else {
             PetContent(
                 pet = pet,
+                onEditClick = { showEditDialog = true },
+                onDeleteClick = { showDeleteDialog = true },
                 appointments = appointments,
-                modifier = Modifier.padding(paddingValues))        }
+                modifier = Modifier.padding(paddingValues)
+            )
+        }
     }
 }
 
 @Composable
-private fun PetContent(pet: Pet, appointments: List<Appointment>, modifier: Modifier = Modifier) {
+private fun PetContent(
+    pet: Pet,
+    appointments: List<Appointment>,
+    modifier: Modifier = Modifier,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
     val healthRecords = remember { mutableStateListOf<HealthRecord>() }
     val recordsRepository = remember { HealthRecordsRepository() }
 
@@ -126,14 +312,18 @@ private fun PetContent(pet: Pet, appointments: List<Appointment>, modifier: Modi
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { ProfileHeader(pet) }
+        item { ProfileHeader(pet, onEditClick, onDeleteClick) }
         item { MedicalInfoCard(pet, appointments) }
         item { VaccinationCard(healthRecords) }
     }
 }
 
 @Composable
-private fun ProfileHeader(pet: Pet) {
+private fun ProfileHeader(
+    pet: Pet,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -176,11 +366,61 @@ private fun ProfileHeader(pet: Pet) {
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
             )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+            ) {
+                FilledTonalButton(
+                    onClick = onEditClick,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Изменить",
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                    )
+                }
+
+                FilledTonalButton(
+                    onClick = onDeleteClick,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Удалить",
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                    )
+                }
+            }
         }
     }
 }
-
-
 
 @Composable
 private fun MedicalInfoCard(pet: Pet, appointments: List<Appointment>) {
@@ -195,7 +435,6 @@ private fun MedicalInfoCard(pet: Pet, appointments: List<Appointment>) {
         .maxOfOrNull {
             LocalDate.parse(it.date, DateTimeFormatter.ISO_DATE)
         }?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) ?: "Нет данных"
-
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -213,7 +452,7 @@ private fun MedicalInfoCard(pet: Pet, appointments: List<Appointment>) {
             MedicalInfoItem(
                 icon = R.drawable.ic_weight,
                 title = "Вес",
-                value = latestWeight ,
+                value = latestWeight,
                 modifier = Modifier.padding(top = 16.dp)
             )
 
@@ -230,8 +469,6 @@ private fun MedicalInfoCard(pet: Pet, appointments: List<Appointment>) {
 private fun VaccinationCard(healthRecords: List<HealthRecord>) {
     val vaccinations = healthRecords
         .filter { it.type == "VACCINATION" }
-
-
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -251,7 +488,8 @@ private fun VaccinationCard(healthRecords: List<HealthRecord>) {
                     title = "Нет данных о прививках",
                     modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally)
+                    horizontalAlignment = Alignment.CenterHorizontally
+                )
             } else {
                 vaccinations.forEachIndexed { index, record ->
                     val formattedDate = record.date.toEuropeanDate()
@@ -285,7 +523,6 @@ private fun MedicalInfoItem(
         Icon(
             painter = painterResource(icon),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)
         )
 
@@ -316,6 +553,8 @@ private fun VaccinationItem(
     expiration: String,
     isLast: Boolean
 ) {
+    Spacer(Modifier.height(24.dp))
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -325,7 +564,6 @@ private fun VaccinationItem(
             Icon(
                 imageVector = Icons.Default.Vaccines,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
 
@@ -336,9 +574,12 @@ private fun VaccinationItem(
                     text = name,
                     style = MaterialTheme.typography.bodyLarge
                 )
-                Text(text = "Дата: $date", style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.primary
-                ))
+                Text(
+                    text = "Дата: $date",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                )
                 if (expiration.isNotEmpty()) {
                     Text(
                         text = "Действует до: $expiration",
@@ -366,7 +607,6 @@ private fun SectionTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleLarge.copy(
-            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold
         ),
         modifier = Modifier.padding(horizontal = 24.dp)

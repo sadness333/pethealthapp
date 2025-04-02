@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.prettypetsandfriends.ui.components.CustomTopBar
+import com.example.prettypetsandfriends.ui.components.DatePickerSection
 import com.example.prettypetsandfriends.R
 import com.example.prettypetsandfriends.backend.repository.PetRepository
 import com.example.prettypetsandfriends.backend.repository.StorageRepository
@@ -28,7 +29,6 @@ import com.example.prettypetsandfriends.ui.components.CustomBottomNavigation
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.prettypetsandfriends.data.entities.DateTransformation
 import com.example.prettypetsandfriends.data.entities.Pet
 import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.launch
@@ -98,22 +98,11 @@ fun AddPetScreen(navController: NavController) {
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = birthYear,
-                        onValueChange = { newValue ->
-                            val filtered = newValue.filter { it.isDigit() }.take(8)
-                            birthYear = filtered
-                        },
-                        label = { Text("Дата рождения*") },
-                        placeholder = { Text("дд.мм.гггг") },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            autoCorrect = false
-                        ),
-                        visualTransformation = DateTransformation(),
+                    DatePickerSection(
+                        selectedDate = birthYear,
+                        onDateSelected = { birthYear = it },
                         modifier = Modifier.weight(1f)
                     )
-
                     OutlinedTextField(
                         value = weight,
                         onValueChange = { if (it.isValidDecimal()) weight = it },
