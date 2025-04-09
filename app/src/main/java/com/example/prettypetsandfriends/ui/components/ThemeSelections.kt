@@ -67,9 +67,9 @@ fun ThemeSelectionDialog(
                             AppTheme.SYSTEM -> "Системная тема"
                         },
                         icon = when (theme) {
-                            AppTheme.LIGHT -> painterResource(id = R.drawable.ic_settings_black)
+                            AppTheme.LIGHT -> painterResource(id = R.drawable.ic_light)
                             AppTheme.DARK -> painterResource(id = R.drawable.ic_dark)
-                            AppTheme.SYSTEM -> painterResource(id = R.drawable.ic_dark)
+                            AppTheme.SYSTEM -> painterResource(id = R.drawable.ic_settings_black)
                         },
                         isSelected = theme == currentTheme,
                         onClick = { onThemeSelected(theme) }

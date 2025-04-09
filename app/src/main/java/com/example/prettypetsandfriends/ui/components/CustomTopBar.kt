@@ -136,7 +136,9 @@ fun CustomTopBar(
                         model = user?.photoUrl,
                         modifier = Modifier.fillMaxSize(),
                         contentDescription = "Профиль",
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(id = R.drawable.ic_person_black),
+                        error = painterResource(id = R.drawable.ic_person_black)
                     )
                 }
             } else {

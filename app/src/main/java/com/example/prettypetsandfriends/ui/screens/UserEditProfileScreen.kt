@@ -60,7 +60,7 @@ fun UserEditProfileScreen(navController: NavController) {
             phone = user.phone ?: ""
             bio = user.bio ?: ""
             role = user.role ?: "user"
-            selectedImageUri = user.photoUrl?.let { Uri.parse(it) }
+            selectedImageUri = user.photoUrl.let { Uri.parse(it) }
         }
     }
 

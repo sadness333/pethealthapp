@@ -12,6 +12,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.prettypetsandfriends.backend.NotificationHelper
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.database.database
+import com.google.firebase.messaging.FirebaseMessaging
 
 @Composable
 fun NotificationSettingsDialog(
@@ -40,13 +44,28 @@ fun NotificationSettingsDialog(
                         "Включить уведомления",
                         modifier = Modifier.weight(1f) )
                     Switch(
-                                checked = notificationsEnabled,
-                        onCheckedChange = {
-                            notificationsEnabled = it
-                            NotificationHelper.setNotificationsEnabled(context, it)
+                        checked = notificationsEnabled,
+                        onCheckedChange = { isEnabled ->
+                            notificationsEnabled = isEnabled
+                            NotificationHelper.setNotificationsEnabled(context, isEnabled)
+
+                            val currentUser = Firebase.auth.currentUser
+                            currentUser?.let { user ->
+                                val fcmRef = Firebase.database.reference
+                                    .child("users")
+                                    .child(user.uid)
+                                    .child("fcmToken")
+
+                                if (isEnabled) {
+                                    FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+                                        fcmRef.setValue(token)
+                                    }
+                                } else {
+                                    fcmRef.removeValue()
+                                }
+                            }
                         }
                     )
-
                 }
             }
         },

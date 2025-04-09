@@ -21,6 +21,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -142,9 +143,13 @@ fun RegistrationScreen(navController: NavController) {
                                         .createUserWithEmailAndPassword(email, password)
                                         .await()
 
+                                    val fcmToken = FirebaseMessaging.getInstance().token.await()
+
+
                                     val user = hashMapOf(
                                         "email" to email,
-                                        "createdAt" to ServerValue.TIMESTAMP
+                                        "createdAt" to ServerValue.TIMESTAMP,
+                                        "fcmToken" to fcmToken
                                     )
 
                                     database.child("users").child(authResult.user!!.uid)

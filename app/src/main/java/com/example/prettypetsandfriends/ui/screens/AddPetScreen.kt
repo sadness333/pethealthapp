@@ -232,7 +232,7 @@ fun PhotoSection(
                     .clickable { onPickImage() }
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                if (selectedImageUri != null) {
+                if (selectedImageUri?.toString()?.isNotEmpty() == true) {
                     AsyncImage(
                         model = selectedImageUri,
                         contentDescription = null,
@@ -240,8 +240,8 @@ fun PhotoSection(
                             .fillMaxSize()
                             .clip(CircleShape),
                         contentScale = ContentScale.Crop,
-                        placeholder = painterResource(R.drawable.ic_pets_black),
-                        error = painterResource(R.drawable.ic_pets_black)
+                        placeholder = painterResource(R.drawable.ic_camera),
+                        error = painterResource(R.drawable.ic_camera)
                     )
                 } else {
                     Icon(
