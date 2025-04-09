@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.prettypetsandfriends.R
+import com.example.prettypetsandfriends.backend.NotificationHelper
 import com.example.prettypetsandfriends.utils.LocalPetState
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -36,6 +37,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -159,7 +161,20 @@ fun AuthScreen(navController: NavController) {
                                 errorMessage = null
                                 try {
                                     Firebase.auth.signInWithEmailAndPassword(email, password).await()
-                                    petState.loadPets(Firebase.auth.currentUser!!.uid)
+                                    if (NotificationHelper.areNotificationsEnabled(context)) {
+                                        val newToken = FirebaseMessaging.getInstance().token.await()
+                                        Firebase.database.reference
+                                            .child("users")
+                                            .child(Firebase.auth.currentUser!!.uid)
+                                            .child("fcmToken")
+                                            .get()
+                                            .addOnSuccessListener { snapshot ->
+                                                val existingToken = snapshot.getValue(String::class.java)
+                                                if (existingToken != newToken) {
+                                                    snapshot.ref.setValue(newToken)
+                                                }
+                                            }
+                                    }
                                     navController.navigate("main") {
                                         popUpTo("auth") { inclusive = true }
                                     }
@@ -287,6 +302,16 @@ private fun handleGoogleSignInResult(
                 )
 
                 userRef.setValue(userData).await()
+            }
+
+            if (NotificationHelper.areNotificationsEnabled(context)) {
+                val newToken = FirebaseMessaging.getInstance().token.await()
+                userRef.child("fcmToken").get().addOnSuccessListener { snapshot ->
+                    val existingToken = snapshot.getValue(String::class.java)
+                    if (existingToken != newToken) {
+                        snapshot.ref.setValue(newToken)
+                    }
+                }
             }
 
             navController.navigate("main") {

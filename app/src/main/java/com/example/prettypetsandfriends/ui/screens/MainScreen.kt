@@ -155,7 +155,6 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
                 }
             }
         }
-
         NotifyCard(event = event)
     }
 }
@@ -163,6 +162,9 @@ fun ModernPetCareScreen(paddingValues: PaddingValues, navController: NavControll
 @Composable
 fun NotifyCard(event: PetEvent?) {
     event?.let {
+        val petState = LocalPetState.current
+        val petName = petState.allPets.find { it.id == event.petId }?.name ?: "Неизвестный питомец"
+
         val dateInput = LocalDate.parse(event.date)
         val date = dateInput.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru")))
 
@@ -185,7 +187,7 @@ fun NotifyCard(event: PetEvent?) {
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = "${event.title} • $date ${event.time}",
+                    text = "$petName: ${event.title} • $date ${event.time}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = 8.dp)

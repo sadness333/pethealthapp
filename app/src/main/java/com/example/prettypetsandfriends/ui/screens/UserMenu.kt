@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -200,7 +201,9 @@ private fun ProfileCard(user: User?) {
                         contentDescription = "Аватар",
                         modifier = Modifier
                             .size(64.dp)
-                            .clip(CircleShape)
+                            .clip(CircleShape),
+                        placeholder = painterResource(id = R.drawable.ic_person_black),
+                        error = painterResource(id = R.drawable.ic_person_black)
                     )
 
 
